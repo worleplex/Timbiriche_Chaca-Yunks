@@ -1,0 +1,17 @@
+modelo\Cuadrado.class
+modelovisual\ModeloVisual.class
+modelo\Punto.class
+modelo\Tablero.class
+modelo\ControlJuego.class
+modelo\IOperacionesModelo.class
+vista\VistaTablero$PanelTablero$1.class
+vista\VistaTablero.class
+utilerias\Observador.class
+modelo\Jugador.class
+modelo\Linea.class
+modelo\IConsultaModelo.class
+com\mycompany\timbiriche\Timbiriche.class
+utilerias\SujetoObservado.class
+vista\VistaTablero$PanelTablero.class
+controlador\Controlador.class
+ensamblador\Ensamblador.class
