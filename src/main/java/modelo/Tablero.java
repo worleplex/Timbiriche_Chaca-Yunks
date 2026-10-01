@@ -13,9 +13,10 @@ public class Tablero extends SujetoObservado
         implements IOperacionesModelo, IConsultaModelo {
 
     private final ControlJuego control;
-
-    public Tablero(int tamano, List<Jugador> jugadores) {
-        control = new ControlJuego(tamano, jugadores);
+    
+    public Tablero(List<Jugador> jugadores) {
+        int cantidad = (jugadores.size() - 1) * 10;
+        control = new ControlJuego(cantidad, jugadores);
     }
 
     @Override

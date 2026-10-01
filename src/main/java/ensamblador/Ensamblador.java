@@ -30,7 +30,7 @@ public class Ensamblador {
             jugadores.add(new Jugador("Jugador " + (i + 1), COLORES[i]));
         }
 
-        Tablero modeloGeneral = new Tablero(4, jugadores); // tablero de 3x3 cuadros
+        Tablero modeloGeneral = new Tablero(jugadores);
 
         // Tablero (fachada del Modelo General) implementa ambas interfaces
         // (consulta y operaciones); el Modelo Visual recibe las dos por
