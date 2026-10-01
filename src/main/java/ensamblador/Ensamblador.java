@@ -32,9 +32,9 @@ public class Ensamblador {
 
         Tablero modeloGeneral = new Tablero(4, jugadores); // tablero de 3x3 cuadros
 
-        // Tablero implementa ambas interfaces (consulta y operaciones),
-        // el Modelo Visual recibe las dos por separado -- solo usa cada
-        // una para lo que le corresponde.
+        // Tablero (fachada del Modelo General) implementa ambas interfaces
+        // (consulta y operaciones); el Modelo Visual recibe las dos por
+        // separado -- solo usa cada una para lo que le corresponde.
         ModeloVisual modeloVisual = new ModeloVisual(modeloGeneral, modeloGeneral);
 
         Controlador controlador = new Controlador();
@@ -45,16 +45,15 @@ public class Ensamblador {
         // 2. Establecer las asociaciones
         // ========================================
 
-        // Controlador -> Modelo Visual (y solo a el)
+        // Controlador -> Modelo Visual (solo a traves de IOperacionesModeloVisual)
         controlador.setModeloVisual(modeloVisual);
 
         // Vista -> Controlador
         vista.setControlador(controlador);
 
-        // Vista -> Modelo General de Juego (para leer datos del juego)
-        vista.setModelo(modeloGeneral);
-
-        // Vista -> Modelo Visual (para leer estado de seleccion)
+        // Vista -> Modelo Visual (solo a traves de IConsultaModeloVisual).
+        // La Vista ya NO conoce el Modelo General: todo lo que necesita,
+        // datos del juego y datos visuales, se lo pide al Modelo Visual.
         vista.setModeloVisual(modeloVisual);
 
         // Modelo General de Juego -> Modelo Visual (observer)

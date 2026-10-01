@@ -1,152 +1,122 @@
 package modelovisual;
 
+import modelo.Cuadrado;
 import modelo.IConsultaModelo;
 import modelo.IOperacionesModelo;
+import modelo.Jugador;
 import modelo.Linea;
 import modelo.Punto;
 import utilerias.Observador;
 import utilerias.SujetoObservado;
 
-import java.util.ArrayList;
 import java.util.List;
 
-// Modelo Visual (segun el bosquejo del profe): NO es una copia de los
-// datos del juego, es el estado que le pertenece a ESTA vista/jugador y
-// que nunca deberia compartirse con los demas jugadores -- por ejemplo,
-// que punto ya seleccione pero todavia no confirmo con un segundo clic.
+// Fachada del Modelo Visual (igual que Tablero lo es del Modelo General):
+// es la unica clase del Modelo Visual que conocen las demas capas, pero
+// SOLO a traves de sus interfaces:
+//
+//   Controlador -> IOperacionesModeloVisual
+//   Vista       -> IConsultaModeloVisual
 //
 // Es Observador del Modelo General de Juego (para saber cuando redibujar
 // porque alguien ya jugo) y a la vez es SujetoObservado de la Vista (para
 // avisarle tanto de esos cambios como de cambios puramente visuales, como
 // una seleccion, que al modelo general no le interesan en absoluto).
-public class ModeloVisual extends SujetoObservado implements Observador {
+// Ella sola decide CUANDO notificar; ControlModeloVisual no sabe que
+// existen observadores.
+public class ModeloVisual extends SujetoObservado
+        implements IOperacionesModeloVisual, IConsultaModeloVisual, Observador {
 
     private final IConsultaModelo consultaModeloGeneral;
-    private final IOperacionesModelo operacionesModeloGeneral;
-    private Punto puntoSeleccionado;
+    private final ControlModeloVisual control;
 
-    public ModeloVisual(IConsultaModelo consultaModeloGeneral, IOperacionesModelo operacionesModeloGeneral) {
+    public ModeloVisual(IConsultaModelo consultaModeloGeneral,
+                        IOperacionesModelo operacionesModeloGeneral) {
         this.consultaModeloGeneral = consultaModeloGeneral;
-        this.operacionesModeloGeneral = operacionesModeloGeneral;
+        this.control = new ControlModeloVisual(consultaModeloGeneral, operacionesModeloGeneral);
     }
 
-    // Este es el "Control Modelo" del bosquejo: la Vista/Controlador le
-    // entrega un punto ya traducido a coordenadas de cuadricula, y aqui
-    // se decide si es una seleccion (1er clic) o una jugada (2do clic).
-    // Es el unico lugar del programa que conoce AMBOS lados: el estado
-    // visual (la seleccion) y las operaciones del Modelo General de Juego.
+    // ------------------------------------------
+    // IOperacionesModeloVisual (la usa el Controlador)
+    // ------------------------------------------
+
+    @Override
     public void clicEnPunto(Punto punto) {
 
-        if (!haySeleccion()) {
-            seleccionarPunto(punto);
-            return;
+        boolean cambioVisual = control.clicEnPunto(punto);
+
+        if (cambioVisual) {
+            notificarObservadores();
         }
-
-        Punto anterior = puntoSeleccionado;
-
-        if (anterior.equals(punto)) {
-            seleccionarPunto(punto); // mismo punto otra vez: cancela
-            return;
-        }
-
-        boolean jugadaValida = operacionesModeloGeneral.trazarLinea(
-                anterior.getFila(), anterior.getColumna(),
-                punto.getFila(), punto.getColumna());
-
-        if (!jugadaValida) {
-            // no eran adyacentes o la linea ya existia: el nuevo punto
-            // se vuelve la seleccion, para poder intentar de nuevo
-            seleccionarPunto(punto);
-        }
-
-        // si la jugada SI fue valida, no hace falta hacer nada mas: el
-        // Modelo General notifica -> actualizar() (abajo) limpia la
-        // seleccion automaticamente.
     }
 
-    // El Modelo General de Juego notifica que aplico una jugada valida.
+    // ------------------------------------------
+    // Observador del Modelo General de Juego
+    // ------------------------------------------
+
+    // El Modelo General notifica que aplico una jugada valida.
     @Override
     public void actualizar() {
-        puntoSeleccionado = null; // la jugada ya se confirmo, se limpia la seleccion
-        notificarObservadores();  // avisa a la Vista que hay que redibujar
+        control.limpiarSeleccion(); // la jugada ya se confirmo
+        notificarObservadores();    // avisa a la Vista que hay que redibujar
     }
 
-    public Punto getPuntoSeleccionado() {
-        return puntoSeleccionado;
-    }
+    // ------------------------------------------
+    // IConsultaModeloVisual (la usa la Vista) -- datos visuales
+    // ------------------------------------------
 
+    @Override
     public boolean haySeleccion() {
-        return puntoSeleccionado != null;
+        return control.haySeleccion();
     }
 
-    // Selecciona un punto. Si ya estaba seleccionado ese mismo punto,
-    // lo deselecciona (el usuario se arrepintio).
-    public void seleccionarPunto(Punto punto) {
-
-        if (punto.equals(puntoSeleccionado)) {
-            puntoSeleccionado = null;
-        } else {
-            puntoSeleccionado = punto;
-        }
-
-        notificarObservadores();
+    @Override
+    public Punto getPuntoSeleccionado() {
+        return control.getPuntoSeleccionado();
     }
 
-    // Puntos vecinos al seleccionado que todavia se pueden conectar con
-    // una linea (para remarcarlos, como en el bosquejo). Es informacion
-    // puramente de interfaz: se calcula aqui, no en el modelo general.
+    @Override
     public List<Punto> getPuntosResaltados() {
-
-        List<Punto> resaltados = new ArrayList<>();
-
-        if (puntoSeleccionado == null) {
-            return resaltados;
-        }
-
-        int tamano = consultaModeloGeneral.getTamano();
-        int fila = puntoSeleccionado.getFila();
-        int columna = puntoSeleccionado.getColumna();
-
-        int[][] vecinos = {
-            {fila - 1, columna},
-            {fila + 1, columna},
-            {fila, columna - 1},
-            {fila, columna + 1}
-        };
-
-        for (int[] vecino : vecinos) {
-
-            int filaVecino = vecino[0];
-            int columnaVecino = vecino[1];
-
-            boolean dentroDelTablero =
-                    filaVecino >= 0 && filaVecino < tamano
-                            && columnaVecino >= 0 && columnaVecino < tamano;
-
-            if (!dentroDelTablero) {
-                continue;
-            }
-
-            Punto candidato = new Punto(filaVecino, columnaVecino);
-
-            if (!lineaYaExiste(puntoSeleccionado, candidato)) {
-                resaltados.add(candidato);
-            }
-        }
-
-        return resaltados;
+        return control.getPuntosResaltados();
     }
 
-    private boolean lineaYaExiste(Punto puntoA, Punto puntoB) {
+    // ------------------------------------------
+    // IConsultaModeloVisual (la usa la Vista) -- datos del juego,
+    // obtenidos del Modelo General (el "get()" del bosquejo)
+    // ------------------------------------------
 
-        Linea posible = new Linea(puntoA, puntoB, null);
+    @Override
+    public int getTamano() {
+        return consultaModeloGeneral.getTamano();
+    }
 
-        for (Linea linea : consultaModeloGeneral.getLineas()) {
-            if (linea.equals(posible)) {
-                return true;
-            }
-        }
+    @Override
+    public List<Linea> getLineas() {
+        return consultaModeloGeneral.getLineas();
+    }
 
-        return false;
+    @Override
+    public List<Cuadrado> getCuadros() {
+        return consultaModeloGeneral.getCuadros();
+    }
+
+    @Override
+    public List<Jugador> getJugadores() {
+        return consultaModeloGeneral.getJugadores();
+    }
+
+    @Override
+    public Jugador getJugadorActual() {
+        return consultaModeloGeneral.getJugadorActual();
+    }
+
+    @Override
+    public boolean isJuegoTerminado() {
+        return consultaModeloGeneral.isJuegoTerminado();
+    }
+
+    @Override
+    public List<Jugador> getGanadores() {
+        return consultaModeloGeneral.getGanadores();
     }
 }

@@ -1,16 +1,17 @@
 package controlador;
 
 import modelo.Punto;
-import modelovisual.ModeloVisual;
+import modelovisual.IOperacionesModeloVisual;
 
-// El Controlador ya NO conoce el Modelo General de Juego. Solo sabe
-// traducir "el usuario hizo clic en este punto" y entregarselo al
-// Modelo Visual, que es quien decide que significa ese clic.
+// El Controlador NO conoce el Modelo General de Juego ni la clase
+// concreta del Modelo Visual: solo sabe traducir "el usuario hizo clic en
+// este punto" y entregarselo a la interfaz de operaciones del Modelo
+// Visual, que es quien decide que significa ese clic.
 public class Controlador {
 
-    private ModeloVisual modeloVisual;
+    private IOperacionesModeloVisual modeloVisual;
 
-    public void setModeloVisual(ModeloVisual modeloVisual) {
+    public void setModeloVisual(IOperacionesModeloVisual modeloVisual) {
         this.modeloVisual = modeloVisual;
     }
 

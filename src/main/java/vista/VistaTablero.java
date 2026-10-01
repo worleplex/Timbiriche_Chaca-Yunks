@@ -2,11 +2,10 @@ package vista;
 
 import controlador.Controlador;
 import modelo.Cuadrado;
-import modelo.IConsultaModelo;
 import modelo.Jugador;
 import modelo.Linea;
 import modelo.Punto;
-import modelovisual.ModeloVisual;
+import modelovisual.IConsultaModeloVisual;
 import utilerias.Observador;
 
 import javax.swing.BorderFactory;
@@ -26,20 +25,22 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-// La Vista ahora solo se suscribe al Modelo Visual (no directamente al
-// Modelo General de Juego). El Modelo Visual es quien decide cuando la
-// Vista debe redibujar, ya sea porque el juego avanzo o porque cambio
-// algo puramente de interfaz (una seleccion).
+// La Vista solo conoce al Modelo Visual (a traves de IConsultaModeloVisual)
+// y al Controlador. Se suscribe como observador del Modelo Visual, que es
+// quien decide cuando la Vista debe redibujar, ya sea porque el juego
+// avanzo o porque cambio algo puramente de interfaz (una seleccion).
 public class VistaTablero extends JFrame implements Observador {
 
+    // El area que ocupa el tablero en pantalla es SIEMPRE la misma,
+    // sin importar cuantos puntos tenga (el tamano de cada celda se
+    // calcula a partir de ella).
+    private static final int AREA_TABLERO = 480;
     private static final int MARGEN = 50;
-    private static final int TAMANO_CELDA = 80;
-    private static final int RADIO_PUNTO = 6;
-    private static final int TOLERANCIA_CLIC = 16;
+    private static final int RADIO_PUNTO_MAXIMO = 6;
+    private static final int TOLERANCIA_CLIC_MAXIMA = 16;
 
     private Controlador controlador;
-    private IConsultaModelo modelo;
-    private ModeloVisual modeloVisual;
+    private IConsultaModeloVisual modeloVisual;
 
     private final PanelTablero panelTablero;
     private final JLabel lblEstado;
@@ -48,7 +49,6 @@ public class VistaTablero extends JFrame implements Observador {
 
         setTitle("Timbiriche");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null);
 
         panelTablero = new PanelTablero();
 
@@ -69,18 +69,14 @@ public class VistaTablero extends JFrame implements Observador {
         this.controlador = controlador;
     }
 
-    public void setModelo(IConsultaModelo modelo) {
+    public void setModeloVisual(IConsultaModeloVisual modeloVisual) {
 
-        this.modelo = modelo;
+        this.modeloVisual = modeloVisual;
 
-        int tamano = modelo.getTamano();
-        int lado = MARGEN * 2 + TAMANO_CELDA * (tamano - 1);
+        int lado = MARGEN * 2 + AREA_TABLERO;
         panelTablero.setPreferredSize(new Dimension(lado, lado));
         pack();
-    }
-
-    public void setModeloVisual(ModeloVisual modeloVisual) {
-        this.modeloVisual = modeloVisual;
+        setLocationRelativeTo(null); // despues de pack(), para que si quede centrada
     }
 
     // ------------------------------------------
@@ -95,48 +91,65 @@ public class VistaTablero extends JFrame implements Observador {
 
     private void actualizarEtiquetaEstado() {
 
-        if (modelo.isJuegoTerminado()) {
-            lblEstado.setText("Juego terminado. Gana " + textoGanador());
+        if (modeloVisual.isJuegoTerminado()) {
+            lblEstado.setForeground(Color.BLACK);
+            lblEstado.setText(textoResultado());
             return;
         }
 
+        Jugador actual = modeloVisual.getJugadorActual();
+
         StringBuilder texto = new StringBuilder("Turno de ");
-        texto.append(modelo.getJugadorActual().getNombre());
+        texto.append(actual.getNombre());
         texto.append("     ");
 
-        for (Jugador jugador : modelo.getJugadores()) {
+        for (Jugador jugador : modeloVisual.getJugadores()) {
             texto.append(jugador.getNombre())
                     .append(": ")
                     .append(jugador.getPuntaje())
                     .append("     ");
         }
 
+        lblEstado.setForeground(actual.getColor());
         lblEstado.setText(texto.toString());
     }
 
-    private String textoGanador() {
+    private String textoResultado() {
 
-        Jugador ganador = modelo.getJugadores().get(0);
+        List<Jugador> ganadores = modeloVisual.getGanadores();
+        int cuadros = ganadores.get(0).getPuntaje();
 
-        for (Jugador jugador : modelo.getJugadores()) {
-            if (jugador.getPuntaje() > ganador.getPuntaje()) {
-                ganador = jugador;
-            }
+        if (ganadores.size() == 1) {
+            return "Juego terminado. Gana " + ganadores.get(0).getNombre()
+                    + " (" + cuadros + " cuadros)";
         }
 
-        return ganador.getNombre() + " (" + ganador.getPuntaje() + " cuadros)";
+        StringBuilder nombres = new StringBuilder();
+        for (int i = 0; i < ganadores.size(); i++) {
+            if (i > 0) {
+                nombres.append(", ");
+            }
+            nombres.append(ganadores.get(i).getNombre());
+        }
+
+        return "Juego terminado. Empate entre " + nombres + " (" + cuadros + " cuadros c/u)";
     }
 
     // ------------------------------------------
     // Coordenadas de pantalla
     // ------------------------------------------
 
+    // Separacion en pixeles entre dos puntos vecinos.
+    private double tamanoCelda() {
+        return (double) AREA_TABLERO / (modeloVisual.getTamano() - 1);
+    }
+
     private int coordenadaX(int columna) {
-        return MARGEN + columna * TAMANO_CELDA;
+        return MARGEN + (int) Math.round(columna * tamanoCelda());
     }
 
     private int coordenadaY(int fila) {
-        return MARGEN + fila * TAMANO_CELDA;
+        return MARGEN + (int) Math.round(fila * tamanoCelda());
     }
 
     // ------------------------------------------
@@ -157,11 +170,11 @@ public class VistaTablero extends JFrame implements Observador {
             });
         }
 
-        // Ahora se busca el PUNTO mas cercano al clic (no la arista mas
+        // Se busca el PUNTO mas cercano al clic (no la arista mas
         // cercana): el flujo es clic en un punto, clic en otro punto.
         private void manejarClic(int x, int y) {
 
-            if (modelo == null || controlador == null || modelo.isJuegoTerminado()) {
+            if (modeloVisual == null || controlador == null || modeloVisual.isJuegoTerminado()) {
                 return;
             }
 
@@ -174,9 +187,9 @@ public class VistaTablero extends JFrame implements Observador {
 
         private Punto puntoMasCercano(int x, int y) {
 
-            int tamano = modelo.getTamano();
+            int tamano = modeloVisual.getTamano();
             Punto mejor = null;
-            double mejorDistancia = TOLERANCIA_CLIC;
+            double mejorDistancia = Math.min(TOLERANCIA_CLIC_MAXIMA, tamanoCelda() / 2);
 
             for (int fila = 0; fila < tamano; fila++) {
                 for (int columna = 0; columna < tamano; columna++) {
@@ -200,7 +213,7 @@ public class VistaTablero extends JFrame implements Observador {
 
             super.paintComponent(g);
 
-            if (modelo == null) {
+            if (modeloVisual == null) {
                 return;
             }
 
@@ -214,21 +227,27 @@ public class VistaTablero extends JFrame implements Observador {
 
         private void dibujarCuadrosCompletados(Graphics2D g2) {
 
-            for (Cuadrado cuadrado : modelo.getCuadros()) {
+            for (Cuadrado cuadrado : modeloVisual.getCuadros()) {
 
                 int fila = cuadrado.getEsquinaSupIzq().getFila();
                 int columna = cuadrado.getEsquinaSupIzq().getColumna();
 
+                int x = coordenadaX(columna);
+                int y = coordenadaY(fila);
+                int ancho = coordenadaX(columna + 1) - x;
+                int alto = coordenadaY(fila + 1) - y;
+
                 g2.setColor(colorSuave(cuadrado.getJugador().getColor()));
-                g2.fillRect(coordenadaX(columna), coordenadaY(fila), TAMANO_CELDA, TAMANO_CELDA);
+                g2.fillRect(x, y, ancho, alto);
             }
         }
 
         private void dibujarLineas(Graphics2D g2) {
 
-            g2.setStroke(new BasicStroke(4));
+            float grosor = (float) Math.max(2, Math.min(4, tamanoCelda() / 10));
+            g2.setStroke(new BasicStroke(grosor));
 
-            for (Linea linea : modelo.getLineas()) {
+            for (Linea linea : modeloVisual.getLineas()) {
 
                 g2.setColor(linea.getJugador().getColor());
 
@@ -243,9 +262,11 @@ public class VistaTablero extends JFrame implements Observador {
         // que "aparecen los puntos remarcados" del bosquejo.
         private void dibujarPuntos(Graphics2D g2) {
 
-            int tamano = modelo.getTamano();
+            int tamano = modeloVisual.getTamano();
             Punto seleccionado = modeloVisual.getPuntoSeleccionado();
             List<Punto> resaltados = modeloVisual.getPuntosResaltados();
+
+            int radioPunto = (int) Math.max(2, Math.min(RADIO_PUNTO_MAXIMO, tamanoCelda() / 8));
 
             for (int fila = 0; fila < tamano; fila++) {
                 for (int columna = 0; columna < tamano; columna++) {
@@ -256,14 +277,14 @@ public class VistaTablero extends JFrame implements Observador {
 
                     if (actual.equals(seleccionado)) {
                         g2.setColor(Color.ORANGE);
-                        int radio = RADIO_PUNTO + 2;
+                        int radio = radioPunto + 2;
                         g2.fillOval(x - radio, y - radio, radio * 2, radio * 2);
                     } else if (resaltados.contains(actual)) {
                         g2.setColor(new Color(60, 180, 60));
-                        g2.fillOval(x - RADIO_PUNTO, y - RADIO_PUNTO, RADIO_PUNTO * 2, RADIO_PUNTO * 2);
+                        g2.fillOval(x - radioPunto, y - radioPunto, radioPunto * 2, radioPunto * 2);
                     } else {
                         g2.setColor(Color.DARK_GRAY);
-                        g2.fillOval(x - RADIO_PUNTO, y - RADIO_PUNTO, RADIO_PUNTO * 2, RADIO_PUNTO * 2);
+                        g2.fillOval(x - radioPunto, y - radioPunto, radioPunto * 2, radioPunto * 2);
                     }
                 }
             }

@@ -228,12 +228,15 @@ public class ControlJuego {
         return new ArrayList<>(lineas);
     }
 
+    // Se regresan copias: quien consulte no puede modificar el estado
+    // interno del juego (ni tampoco falla si el juego avanza mientras
+    // la Vista esta recorriendo la lista).
     public List<Cuadrado> getCuadros() {
-        return cuadros;
+        return new ArrayList<>(cuadros);
     }
 
     public List<Jugador> getJugadores() {
-        return jugadores;
+        return new ArrayList<>(jugadores);
     }
 
     public Jugador getJugadorActual() {
@@ -243,5 +246,24 @@ public class ControlJuego {
     public boolean isJuegoTerminado() {
         int totalCuadros = (tamano - 1) * (tamano - 1);
         return cuadros.size() == totalCuadros;
+    }
+
+    // Todos los jugadores que tengan el puntaje mas alto: si hay empate
+    // regresa mas de uno (antes la Vista solo mostraba al primero).
+    public List<Jugador> getGanadores() {
+
+        int maximo = 0;
+        for (Jugador jugador : jugadores) {
+            maximo = Math.max(maximo, jugador.getPuntaje());
+        }
+
+        List<Jugador> ganadores = new ArrayList<>();
+        for (Jugador jugador : jugadores) {
+            if (jugador.getPuntaje() == maximo) {
+                ganadores.add(jugador);
+            }
+        }
+
+        return ganadores;
     }
 }

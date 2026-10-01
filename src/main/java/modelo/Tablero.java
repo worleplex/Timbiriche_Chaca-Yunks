@@ -59,4 +59,9 @@ public class Tablero extends SujetoObservado
     public boolean isJuegoTerminado() {
         return control.isJuegoTerminado();
     }
+
+    @Override
+    public List<Jugador> getGanadores() {
+        return control.getGanadores();
+    }
 }
