@@ -2,8 +2,8 @@ package ensamblador;
 
 import controlador.Controlador;
 import modelo.Jugador;
-import modelo.Tablero;
-import modelovisual.ModeloVisual;
+import modelo.FachadaModelo;
+import modelovisual.FachadaModeloVisual;
 import vista.VistaTablero;
 
 import javax.swing.JOptionPane;
@@ -11,6 +11,10 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *
+ * @author julian izaguirre
+ */
 public class Ensamblador {
 
     private static final Color[] COLORES = {
@@ -30,12 +34,12 @@ public class Ensamblador {
             jugadores.add(new Jugador("Jugador " + (i + 1), COLORES[i]));
         }
 
-        Tablero modeloGeneral = new Tablero(jugadores);
+        FachadaModelo modeloGeneral = new FachadaModelo(jugadores);
 
-        // Tablero (fachada del Modelo General) implementa ambas interfaces
+        // FachadaModelo (fachada del Modelo General) implementa ambas interfaces
         // (consulta y operaciones); el Modelo Visual recibe las dos por
         // separado -- solo usa cada una para lo que le corresponde.
-        ModeloVisual modeloVisual = new ModeloVisual(modeloGeneral, modeloGeneral);
+        FachadaModeloVisual modeloVisual = new FachadaModeloVisual(modeloGeneral, modeloGeneral);
 
         Controlador controlador = new Controlador();
 

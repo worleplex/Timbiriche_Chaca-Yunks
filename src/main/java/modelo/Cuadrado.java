@@ -1,8 +1,9 @@
 package modelo;
 
-// Un Cuadrado solo se crea cuando sus 4 lados ya existen -- se forma a
-// partir de las 4 Linea reales que lo completan, mas el Jugador que lo
-// gano (quien trazo la ultima linea que lo cerro).
+/**
+ *
+ * @author julian izaguirre
+ */
 public class Cuadrado {
 
     // Se guarda explicita: NO se puede confiar en linea1.getPuntoA()

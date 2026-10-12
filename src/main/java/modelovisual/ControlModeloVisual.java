@@ -8,13 +8,10 @@ import modelo.Punto;
 import java.util.ArrayList;
 import java.util.List;
 
-// Es el "Control Modelo" del bosquejo: aqui viven los datos visuales
-// (la seleccion) y la logica que decide que significa un clic. Cumple el
-// mismo papel que ControlJuego en el Modelo General: NO notifica a nadie,
-// eso lo hace la fachada (ModeloVisual).
-//
-// Es el unico lugar que conoce AMBOS lados: el estado visual y las
-// operaciones del Modelo General de Juego (para "validar(3,2,P1)").
+/**
+ *
+ * @author julian izaguirre
+ */
 public class ControlModeloVisual {
 
     private final IConsultaModelo consultaModeloGeneral;

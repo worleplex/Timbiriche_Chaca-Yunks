@@ -1,5 +1,9 @@
 package modelo;
 
+/**
+ *
+ * @author julian izaguirre
+ */
 public class Linea {
 
     private final Punto puntoA;

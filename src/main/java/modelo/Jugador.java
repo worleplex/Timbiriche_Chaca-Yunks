@@ -2,6 +2,10 @@ package modelo;
 
 import java.awt.Color;
 
+/**
+ *
+ * @author julian izaguirre
+ */
 public class Jugador {
 
     private final String nombre;

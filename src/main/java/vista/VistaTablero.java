@@ -25,10 +25,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
-// La Vista solo conoce al Modelo Visual (a traves de IConsultaModeloVisual)
-// y al Controlador. Se suscribe como observador del Modelo Visual, que es
-// quien decide cuando la Vista debe redibujar, ya sea porque el juego
-// avanzo o porque cambio algo puramente de interfaz (una seleccion).
+/**
+ *
+ * @author julian izaguirre
+ */
 public class VistaTablero extends JFrame implements Observador {
 
     // El area que ocupa el tablero en pantalla es SIEMPRE la misma,

@@ -3,6 +3,10 @@ package utilerias;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *
+ * @author julian izaguirre
+ */
 public abstract class SujetoObservado {
 
     private final List<Observador> observadores;

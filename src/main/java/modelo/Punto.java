@@ -2,6 +2,10 @@ package modelo;
 
 import java.util.Objects;
 
+/**
+ *
+ * @author julian izaguirre
+ */
 public class Punto {
 
     private final int fila;

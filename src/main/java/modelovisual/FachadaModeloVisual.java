@@ -11,26 +11,17 @@ import utilerias.SujetoObservado;
 
 import java.util.List;
 
-// Fachada del Modelo Visual (igual que Tablero lo es del Modelo General):
-// es la unica clase del Modelo Visual que conocen las demas capas, pero
-// SOLO a traves de sus interfaces:
-//
-//   Controlador -> IOperacionesModeloVisual
-//   Vista       -> IConsultaModeloVisual
-//
-// Es Observador del Modelo General de Juego (para saber cuando redibujar
-// porque alguien ya jugo) y a la vez es SujetoObservado de la Vista (para
-// avisarle tanto de esos cambios como de cambios puramente visuales, como
-// una seleccion, que al modelo general no le interesan en absoluto).
-// Ella sola decide CUANDO notificar; ControlModeloVisual no sabe que
-// existen observadores.
-public class ModeloVisual extends SujetoObservado
+/**
+ *
+ * @author julian izaguirre
+ */
+public class FachadaModeloVisual extends SujetoObservado
         implements IOperacionesModeloVisual, IConsultaModeloVisual, Observador {
 
     private final IConsultaModelo consultaModeloGeneral;
     private final ControlModeloVisual control;
 
-    public ModeloVisual(IConsultaModelo consultaModeloGeneral,
+    public FachadaModeloVisual(IConsultaModelo consultaModeloGeneral,
                         IOperacionesModelo operacionesModeloGeneral) {
         this.consultaModeloGeneral = consultaModeloGeneral;
         this.control = new ControlModeloVisual(consultaModeloGeneral, operacionesModeloGeneral);

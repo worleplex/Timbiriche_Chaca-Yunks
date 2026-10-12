@@ -2,8 +2,12 @@ package com.mycompany.timbiriche;
 
 import ensamblador.Ensamblador;
 
-//import javax.swing.SwingUtilities;
+//import javax.swing.SwingUtilities; para después con la red
 
+/**
+ *
+ * @author julian izaguirre
+ */
 public class Timbiriche {
 
     public static void main(String[] args) {

@@ -1,9 +1,8 @@
 modelo\Cuadrado.class
-modelovisual\ModeloVisual.class
 modelo\Punto.class
 modelo\Tablero.class
+modelovisual\FachadaModeloVisual.class
 modelovisual\ControlModeloVisual.class
-modelo\ControlJuego.class
 modelo\IOperacionesModelo.class
 vista\VistaTablero$PanelTablero$1.class
 modelovisual\IOperacionesModeloVisual.class
@@ -12,6 +11,7 @@ utilerias\Observador.class
 modelo\Jugador.class
 modelo\Linea.class
 modelovisual\IConsultaModeloVisual.class
+modelo\FachadaModelo.class
 modelo\IConsultaModelo.class
 com\mycompany\timbiriche\Timbiriche.class
 utilerias\SujetoObservado.class

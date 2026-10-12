@@ -1,5 +1,9 @@
 package modelo;
 
+/**
+ *
+ * @author julian izaguirre
+ */
 public interface IOperacionesModelo {
 
     // Intenta trazar una linea entre dos puntos adyacentes del jugador en turno.
