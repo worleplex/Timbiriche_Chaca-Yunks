@@ -47,34 +47,31 @@ public class Ensamblador {
 
         Controlador controlador = new Controlador();
 
-        VistaTablero vista = new VistaTablero();
+        List<VistaTablero> vistas = new ArrayList<>();
 
         // ========================================
         // 2. Establecer las asociaciones
         // ========================================
 
-        // Controlador -> Modelo Visual (solo a traves de IOperacionesModeloVisual)
         controlador.setModeloVisual(modeloVisual);
-
-        // Vista -> Controlador
-        vista.setControlador(controlador);
-
-        // Vista -> Modelo Visual (solo a traves de IConsultaModeloVisual).
-        // La Vista ya NO conoce el Modelo General: todo lo que necesita,
-        // datos del juego y datos visuales, se lo pide al Modelo Visual.
-        vista.setModeloVisual(modeloVisual);
-
-        // Modelo General de Juego -> Modelo Visual (observer)
         modeloGeneral.agregarObservador(modeloVisual);
-
-        // Modelo Visual -> Vista (observer)
-        modeloVisual.agregarObservador(vista);
+        
+        for (int i = 0; i < numJugadores.getAsInt(); i++) {
+            VistaTablero vista = new VistaTablero(i + 1);
+            vista.setControlador(controlador);
+            vista.setModeloVisual(modeloVisual);
+            vista.setJugadorAsignado(jugadores.get(i));
+            modeloVisual.agregarObservador(vista);
+            vistas.add(vista);
+        }
 
         // ========================================
         // 3. Mostrar el estado inicial y la vista
         // ========================================
 
-        vista.actualizar();
-        vista.setVisible(true);
+        for (VistaTablero vista : vistas) {
+            vista.actualizar();
+            vista.setVisible(true);
+        }
     }
 }

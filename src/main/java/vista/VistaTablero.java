@@ -34,6 +34,7 @@ public class VistaTablero extends JFrame implements Observador {
 
     private Controlador controlador;
     private IConsultaModeloVisual modeloVisual;
+    private Jugador jugadorAsignado;
 
     private final PanelTablero panelTablero = new PanelTablero();
     private final PanelLateral panelLateral = new PanelLateral();
@@ -41,18 +42,22 @@ public class VistaTablero extends JFrame implements Observador {
 
     // Ultimo jugador al que se le anuncio el turno
     private Jugador ultimoAnunciado;
-
+    
     public VistaTablero() {
+        this(1);
+    }
 
-        setTitle("Timbiriche");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    public VistaTablero(int numeroVista) {
+        setTitle("Timbiriche - Vista " + numeroVista);
+        // Cerrar una ventana no debe cerrar las demás vistas del mismo juego
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         JPanel contenido = new JPanel(new GridBagLayout());
         contenido.setBackground(Tema.FONDO);
         contenido.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
         setContentPane(contenido);
 
-        // Tablero ~62% del ancho, barra lateral ~38% (proporcion del storyboard).
+        // Tablero ~62% del ancho, barra lateral ~38%
         GridBagConstraints tablero = new GridBagConstraints();
         tablero.gridx = 0;
         tablero.weightx = 0.62;
@@ -92,7 +97,25 @@ public class VistaTablero extends JFrame implements Observador {
         this.modeloVisual = modeloVisual;
         panelTablero.setModeloVisual(modeloVisual);
         panelLateral.setModeloVisual(modeloVisual);
+        panelLateral.setJugadorAsignado(jugadorAsignado);
         cartelTurno.setModeloVisual(modeloVisual);
+    }
+
+    public void setJugadorAsignado(Jugador jugador) {
+        this.jugadorAsignado = jugador;
+        if (modeloVisual != null) panelLateral.setJugadorAsignado(jugador);
+        if (jugador != null && modeloVisual != null) {
+            Color color = modeloVisual.getColor(jugador);
+            setTitle("Timbiriche - " + jugador.getNombre() + " (" + nombreColor(color) + ")");
+        }
+    }
+
+    private String nombreColor(Color color) {
+        if (Color.BLUE.equals(color)) return "Azul";
+        if (Color.RED.equals(color)) return "Rojo";
+        if (new Color(0, 150, 0).equals(color)) return "Verde";
+        if (new Color(220, 140, 0).equals(color)) return "Naranja";
+        return "Personalizado";
     }
 
     // Lo llama el Modelo Visual cuando algo cambia patron Observer
@@ -132,6 +155,7 @@ public class VistaTablero extends JFrame implements Observador {
         private static final long DURACION_MS = 1300;
 
         private IConsultaModeloVisual modeloVisual;
+    private Jugador jugadorAsignado;
         private String texto = "";
         private JComponent referencia; // el cartel se centra sobre el tablero
         private long inicio;
