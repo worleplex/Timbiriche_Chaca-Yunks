@@ -13,6 +13,7 @@ modelo\Linea.class
 modelovisual\IConsultaModeloVisual.class
 modelo\FachadaModelo.class
 modelo\IConsultaModelo.class
+vista\DialogoNumeroJugadores.class
 com\mycompany\timbiriche\Timbiriche.class
 utilerias\SujetoObservado.class
 vista\VistaTablero$PanelTablero.class

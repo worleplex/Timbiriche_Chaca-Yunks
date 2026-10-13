@@ -9,6 +9,7 @@ import modelo.Punto;
 import utilerias.Observador;
 import utilerias.SujetoObservado;
 
+import java.awt.Color;
 import java.util.List;
 
 /**
@@ -71,6 +72,11 @@ public class FachadaModeloVisual extends SujetoObservado
         return control.getPuntosResaltados();
     }
 
+    @Override
+    public Color getColor(Jugador jugador) {
+        return control.getColor(jugador);
+    }
+
     // ------------------------------------------
     // IConsultaModeloVisual (la usa la Vista) -- datos del juego,
     // obtenidos del Modelo General (el "get()" del bosquejo)
@@ -104,6 +110,11 @@ public class FachadaModeloVisual extends SujetoObservado
     @Override
     public boolean isJuegoTerminado() {
         return consultaModeloGeneral.isJuegoTerminado();
+    }
+
+    @Override
+    public List<Punto> getPuntosConectables(Punto desde) {
+        return consultaModeloGeneral.getPuntosConectables(desde);
     }
 
     @Override

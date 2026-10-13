@@ -1,6 +1,7 @@
 package modelo;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -11,20 +12,52 @@ import java.util.Set;
  */
 public class Tablero {
 
+    // Reglas del juego (segun el PDF): juegan de 2 a 4 personas y el tamano
+    // del tablero depende de cuantas sean: 2 -> 10x10, 3 -> 20x20 y
+    // 4 -> 30x30 puntos. Esta regla vive aqui, en el Modelo General.
+    public static final int MIN_JUGADORES = 2;
+    public static final int MAX_JUGADORES = 4;
+    private static final int PUNTOS_POR_JUGADOR_EXTRA = 10;
+
     private final int tamano; // puntos por lado (tamano-1 x tamano-1 cuadros)
     private final Set<Linea> lineas;
     private final List<Cuadrado> cuadros; // solo cuadros YA completados
     private final List<Jugador> jugadores;
     private int turnoActual;
 
-    public Tablero(int tamano, List<Jugador> jugadores) {
+    // El tamano lo decide el Tablero a partir de la cantidad de jugadores.
+    public Tablero(List<Jugador> jugadores) {
+        this(tamanoParaJugadores(jugadores), jugadores);
+    }
+
+    // Sin "public": solo se ve dentro del paquete modelo. Sirve para
+    // pruebas con un tablero chico (por ejemplo 4 puntos = 3x3 cuadros).
+    Tablero(int tamano, List<Jugador> jugadores) {
+
+        if (tamano < 2) {
+            throw new IllegalArgumentException("El tablero necesita al menos 2 puntos por lado");
+        }
+        if (jugadores == null || jugadores.isEmpty()) {
+            throw new IllegalArgumentException("Se necesita al menos un jugador");
+        }
+
         this.tamano = tamano;
-        this.jugadores = jugadores;
+        this.jugadores = new ArrayList<>(jugadores); // copia: la lista de afuera ya no nos afecta
         this.lineas = new LinkedHashSet<>();
         this.cuadros = new ArrayList<>();
         this.turnoActual = 0;
         // No se pre-crean los cuadros: se crean uno a uno dentro de
         // completarCuadros(), solo cuando de verdad se completan.
+    }
+
+    private static int tamanoParaJugadores(List<Jugador> jugadores) {
+
+        if (jugadores == null || jugadores.size() < MIN_JUGADORES || jugadores.size() > MAX_JUGADORES) {
+            throw new IllegalArgumentException(
+                    "Se necesitan de " + MIN_JUGADORES + " a " + MAX_JUGADORES + " jugadores");
+        }
+
+        return (jugadores.size() - 1) * PUNTOS_POR_JUGADOR_EXTRA;
     }
 
     // ------------------------------------------
@@ -37,21 +70,16 @@ public class Tablero {
             return false;
         }
 
-        if (!sonAdyacentes(fila1, columna1, fila2, columna2)) {
-            return false;
-        }
-
         Punto puntoA = new Punto(fila1, columna1);
         Punto puntoB = new Punto(fila2, columna2);
-        Jugador jugadorActual = getJugadorActual();
 
-        Linea nuevaLinea = new Linea(puntoA, puntoB, jugadorActual);
-
-        if (lineas.contains(nuevaLinea)) {
+        if (!sePuedeTrazar(puntoA, puntoB)) {
             return false;
         }
 
-        lineas.add(nuevaLinea);
+        Jugador jugadorActual = getJugadorActual();
+
+        lineas.add(new Linea(puntoA, puntoB, jugadorActual));
 
         int cuadrosCompletados = completarCuadros(puntoA, puntoB, jugadorActual);
 
@@ -64,18 +92,28 @@ public class Tablero {
         return true;
     }
 
-    private boolean sonAdyacentes(int fila1, int columna1, int fila2, int columna2) {
+    // UNICA regla de "se puede trazar esta linea": la usan tanto
+    // trazarLinea() como getPuntosConectables(), asi no se repite.
+    // Debe ser entre puntos del tablero, vecinos en horizontal o vertical
+    // (nada de diagonales) y que esa linea no exista ya.
+    private boolean sePuedeTrazar(Punto puntoA, Punto puntoB) {
 
-        boolean dentroDelTablero =
-                fila1 >= 0 && fila1 < tamano && columna1 >= 0 && columna1 < tamano
-                        && fila2 >= 0 && fila2 < tamano && columna2 >= 0 && columna2 < tamano;
+        return estaDentroDelTablero(puntoA)
+                && estaDentroDelTablero(puntoB)
+                && sonAdyacentes(puntoA, puntoB)
+                && !lineas.contains(new Linea(puntoA, puntoB, null));
+    }
 
-        if (!dentroDelTablero) {
-            return false;
-        }
+    private boolean estaDentroDelTablero(Punto punto) {
 
-        int distanciaFila = Math.abs(fila1 - fila2);
-        int distanciaColumna = Math.abs(columna1 - columna2);
+        return punto.getFila() >= 0 && punto.getFila() < tamano
+                && punto.getColumna() >= 0 && punto.getColumna() < tamano;
+    }
+
+    private boolean sonAdyacentes(Punto puntoA, Punto puntoB) {
+
+        int distanciaFila = Math.abs(puntoA.getFila() - puntoB.getFila());
+        int distanciaColumna = Math.abs(puntoA.getColumna() - puntoB.getColumna());
 
         return (distanciaFila == 1 && distanciaColumna == 0)
                 || (distanciaFila == 0 && distanciaColumna == 1);
@@ -223,19 +261,19 @@ public class Tablero {
         return tamano;
     }
 
+    // Todas las consultas regresan listas de SOLO LECTURA (copias): quien
+    // consulte no puede modificar el estado interno del juego, ni falla
+    // si el juego avanza mientras la Vista recorre la lista.
     public List<Linea> getLineas() {
-        return new ArrayList<>(lineas);
+        return Collections.unmodifiableList(new ArrayList<>(lineas));
     }
 
-    // Se regresan copias: quien consulte no puede modificar el estado
-    // interno del juego (ni tampoco falla si el juego avanza mientras
-    // la Vista esta recorriendo la lista).
     public List<Cuadrado> getCuadros() {
-        return new ArrayList<>(cuadros);
+        return Collections.unmodifiableList(new ArrayList<>(cuadros));
     }
 
     public List<Jugador> getJugadores() {
-        return new ArrayList<>(jugadores);
+        return Collections.unmodifiableList(new ArrayList<>(jugadores));
     }
 
     public Jugador getJugadorActual() {
@@ -247,8 +285,35 @@ public class Tablero {
         return cuadros.size() == totalCuadros;
     }
 
+    // Puntos a los que se puede unir "desde" con una linea valida: los
+    // vecinos de arriba, abajo, izquierda y derecha que esten dentro del
+    // tablero y cuya linea todavia no exista. Regresa vacia si el juego
+    // ya termino o si "desde" no es un punto del tablero.
+    public List<Punto> getPuntosConectables(Punto desde) {
+
+        List<Punto> conectables = new ArrayList<>();
+
+        if (desde == null || isJuegoTerminado() || !estaDentroDelTablero(desde)) {
+            return Collections.unmodifiableList(conectables);
+        }
+
+        int[][] direcciones = {{-1, 0}, {1, 0}, {0, -1}, {0, 1}};
+
+        for (int[] direccion : direcciones) {
+
+            Punto candidato = new Punto(
+                    desde.getFila() + direccion[0], desde.getColumna() + direccion[1]);
+
+            if (sePuedeTrazar(desde, candidato)) {
+                conectables.add(candidato);
+            }
+        }
+
+        return Collections.unmodifiableList(conectables);
+    }
+
     // Todos los jugadores que tengan el puntaje mas alto: si hay empate
-    // regresa mas de uno (antes la Vista solo mostraba al primero).
+    // regresa mas de uno.
     public List<Jugador> getGanadores() {
 
         int maximo = 0;
@@ -263,6 +328,6 @@ public class Tablero {
             }
         }
 
-        return ganadores;
+        return Collections.unmodifiableList(ganadores);
     }
 }

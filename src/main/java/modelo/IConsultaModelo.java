@@ -20,7 +20,8 @@ public interface IConsultaModelo {
 
     boolean isJuegoTerminado();
 
-    // Jugadores con el mayor puntaje (mas de uno si hay empate).
+    List<Punto> getPuntosConectables(Punto desde);
+
     List<Jugador> getGanadores();
 
 }

@@ -13,9 +13,10 @@ public class FachadaModelo extends SujetoObservado
 
     private final Tablero control;
     
+    // La fachada ya no decide el tamano: eso es una regla del juego y la
+    // aplica el Tablero a partir de los jugadores.
     public FachadaModelo(List<Jugador> jugadores) {
-        int cantidad = (jugadores.size() - 1) * 10;
-        control = new Tablero(cantidad, jugadores);
+        control = new Tablero(jugadores);
     }
 
     @Override
@@ -58,6 +59,11 @@ public class FachadaModelo extends SujetoObservado
     @Override
     public boolean isJuegoTerminado() {
         return control.isJuegoTerminado();
+    }
+
+    @Override
+    public List<Punto> getPuntosConectables(Punto desde) {
+        return control.getPuntosConectables(desde);
     }
 
     @Override

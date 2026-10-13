@@ -1,15 +1,16 @@
 package ensamblador;
 
 import controlador.Controlador;
-import modelo.Jugador;
 import modelo.FachadaModelo;
+import modelo.Jugador;
+import modelo.Tablero;
 import modelovisual.FachadaModeloVisual;
+import vista.DialogoNumeroJugadores;
 import vista.VistaTablero;
 
-import javax.swing.JOptionPane;
-import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 
 /**
  *
@@ -17,23 +18,26 @@ import java.util.List;
  */
 public class Ensamblador {
 
-    private static final Color[] COLORES = {
-        Color.BLUE, Color.RED, new Color(0, 150, 0), new Color(220, 140, 0)
-    };
-
     public void ensamblar() {
 
         // ========================================
         // 1. Crear los objetos
         // ========================================
 
-        int numJugadores = pedirNumeroDeJugadores();
+        // El Ensamblador no tiene codigo de Swing: la pregunta la hace la Vista.
+        OptionalInt numJugadores = new DialogoNumeroJugadores()
+                .pedirNumeroDeJugadores(Tablero.MIN_JUGADORES, Tablero.MAX_JUGADORES);
 
-        List<Jugador> jugadores = new ArrayList<>();
-        for (int i = 0; i < numJugadores; i++) {
-            jugadores.add(new Jugador("Jugador " + (i + 1), COLORES[i]));
+        if (!numJugadores.isPresent()) {
+            return; // la persona cancelo: no hay nada que armar
         }
 
+        List<Jugador> jugadores = new ArrayList<>();
+        for (int i = 0; i < numJugadores.getAsInt(); i++) {
+            jugadores.add(new Jugador("Jugador " + (i + 1)));
+        }
+
+        // El tamano del tablero lo decide el Modelo General segun los jugadores.
         FachadaModelo modeloGeneral = new FachadaModelo(jugadores);
 
         // FachadaModelo (fachada del Modelo General) implementa ambas interfaces
@@ -72,27 +76,5 @@ public class Ensamblador {
 
         vista.actualizar();
         vista.setVisible(true);
-    }
-
-    private int pedirNumeroDeJugadores() {
-
-        while (true) {
-
-            String texto = JOptionPane.showInputDialog(
-                    null, "Numero de jugadores (2 a 4):", "Timbiriche", JOptionPane.QUESTION_MESSAGE);
-
-            if (texto == null) {
-                System.exit(0); // el usuario cancelo
-            }
-
-            try {
-                int numero = Integer.parseInt(texto.trim());
-                if (numero >= 2 && numero <= 4) {
-                    return numero;
-                }
-            } catch (NumberFormatException ignorado) {
-                // se vuelve a pedir
-            }
-        }
     }
 }

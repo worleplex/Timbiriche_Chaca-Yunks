@@ -1,7 +1,5 @@
 package modelo;
 
-import java.awt.Color;
-
 /**
  *
  * @author julian izaguirre
@@ -9,12 +7,10 @@ import java.awt.Color;
 public class Jugador {
 
     private final String nombre;
-    private final Color color;
     private int puntaje;
 
-    public Jugador(String nombre, Color color) {
+    public Jugador(String nombre) {
         this.nombre = nombre;
-        this.color = color;
         this.puntaje = 0;
     }
 
@@ -22,15 +18,11 @@ public class Jugador {
         return nombre;
     }
 
-    public Color getColor() {
-        return color;
-    }
-
     public int getPuntaje() {
         return puntaje;
     }
 
-    public void sumarPunto() {
+    void sumarPunto() {
         puntaje++;
     }
 }

@@ -13,6 +13,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -83,8 +84,17 @@ public class VistaTablero extends JFrame implements Observador {
     // Observer (notificado por el Modelo Visual)
     // ------------------------------------------
 
+    // Swing solo se puede tocar desde el hilo de eventos (EDT). Hoy todo
+    // corre ahi, pero cuando lleguen mensajes de red el modelo notificara
+    // desde otro hilo: la Vista se protege sola y se reenvia al EDT.
     @Override
     public void actualizar() {
+
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(this::actualizar);
+            return;
+        }
+
         actualizarEtiquetaEstado();
         panelTablero.repaint();
     }
@@ -110,7 +120,7 @@ public class VistaTablero extends JFrame implements Observador {
                     .append("     ");
         }
 
-        lblEstado.setForeground(actual.getColor());
+        lblEstado.setForeground(modeloVisual.getColor(actual));
         lblEstado.setText(texto.toString());
     }
 
@@ -237,7 +247,7 @@ public class VistaTablero extends JFrame implements Observador {
                 int ancho = coordenadaX(columna + 1) - x;
                 int alto = coordenadaY(fila + 1) - y;
 
-                g2.setColor(colorSuave(cuadrado.getJugador().getColor()));
+                g2.setColor(colorSuave(modeloVisual.getColor(cuadrado.getJugador())));
                 g2.fillRect(x, y, ancho, alto);
             }
         }
@@ -249,7 +259,7 @@ public class VistaTablero extends JFrame implements Observador {
 
             for (Linea linea : modeloVisual.getLineas()) {
 
-                g2.setColor(linea.getJugador().getColor());
+                g2.setColor(modeloVisual.getColor(linea.getJugador()));
 
                 g2.drawLine(
                         coordenadaX(linea.getPuntoA().getColumna()), coordenadaY(linea.getPuntoA().getFila()),
