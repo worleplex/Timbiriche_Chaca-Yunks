@@ -1,92 +1,101 @@
 package vista;
 
 import controlador.Controlador;
-import modelo.Cuadrado;
 import modelo.Jugador;
-import modelo.Linea;
-import modelo.Punto;
 import modelovisual.IConsultaModeloVisual;
 import utilerias.Observador;
-
 import javax.swing.BorderFactory;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import java.awt.BasicStroke;
-import java.awt.BorderLayout;
+import javax.swing.Timer;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.List;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 
 /**
+ * es la venta principal a la izquierda el tablero, a la derecha la tarjeta del jugador en turno, 
+ * los demas jugadores y los botones de accion, la ventana se puede redimensionar y todo se adapta
+ * observa al Modelo Visual y se redibuja cuando este avisa que algo cambio y manda los clics 
+ * al Controlador
  *
  * @author julian izaguirre
  */
 public class VistaTablero extends JFrame implements Observador {
 
-    // El area que ocupa el tablero en pantalla es SIEMPRE la misma,
-    // sin importar cuantos puntos tenga (el tamano de cada celda se
-    // calcula a partir de ella).
-    private static final int AREA_TABLERO = 480;
-    private static final int MARGEN = 50;
-    private static final int RADIO_PUNTO_MAXIMO = 6;
-    private static final int TOLERANCIA_CLIC_MAXIMA = 16;
-
     private Controlador controlador;
     private IConsultaModeloVisual modeloVisual;
 
-    private final PanelTablero panelTablero;
-    private final JLabel lblEstado;
+    private final PanelTablero panelTablero = new PanelTablero();
+    private final PanelLateral panelLateral = new PanelLateral();
+    private final CartelTurno cartelTurno = new CartelTurno();
+
+    // Ultimo jugador al que se le anuncio el turno
+    private Jugador ultimoAnunciado;
 
     public VistaTablero() {
 
         setTitle("Timbiriche");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        panelTablero = new PanelTablero();
+        JPanel contenido = new JPanel(new GridBagLayout());
+        contenido.setBackground(Tema.FONDO);
+        contenido.setBorder(BorderFactory.createEmptyBorder(14, 14, 14, 14));
+        setContentPane(contenido);
 
-        lblEstado = new JLabel("", SwingConstants.CENTER);
-        lblEstado.setFont(lblEstado.getFont().deriveFont(Font.BOLD, 15f));
-        lblEstado.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        // Tablero ~62% del ancho, barra lateral ~38% (proporcion del storyboard).
+        GridBagConstraints tablero = new GridBagConstraints();
+        tablero.gridx = 0;
+        tablero.weightx = 0.62;
+        tablero.weighty = 1;
+        tablero.fill = GridBagConstraints.BOTH;
+        tablero.insets = new Insets(0, 0, 0, 14);
+        contenido.add(panelTablero, tablero);
 
-        setLayout(new BorderLayout());
-        add(lblEstado, BorderLayout.NORTH);
-        add(panelTablero, BorderLayout.CENTER);
+        GridBagConstraints lateral = new GridBagConstraints();
+        lateral.gridx = 1;
+        lateral.weightx = 0.38;
+        lateral.weighty = 1;
+        lateral.fill = GridBagConstraints.BOTH;
+        contenido.add(panelLateral, lateral);
+
+        panelTablero.setMinimumSize(new Dimension(300, 300));
+        panelLateral.setMinimumSize(new Dimension(230, 300));
+
+        setGlassPane(cartelTurno);
+
+        // Tamano inicial segun la pantalla (proporcion 16:9 aprox), pero
+        // siempre se puede cambiar
+        Dimension pantalla = Toolkit.getDefaultToolkit().getScreenSize();
+        int ancho = (int) Math.min(1180, pantalla.width * 0.8);
+        int alto = (int) Math.min(ancho / 1.65, pantalla.height * 0.85);
+        setSize(ancho, alto);
+        setMinimumSize(new Dimension(760, 460));
+        setLocationRelativeTo(null);
     }
-
-    // ------------------------------------------
-    // Asociaciones
-    // ------------------------------------------
 
     public void setControlador(Controlador controlador) {
         this.controlador = controlador;
+        panelTablero.setControlador(controlador);
     }
 
     public void setModeloVisual(IConsultaModeloVisual modeloVisual) {
-
         this.modeloVisual = modeloVisual;
-
-        int lado = MARGEN * 2 + AREA_TABLERO;
-        panelTablero.setPreferredSize(new Dimension(lado, lado));
-        pack();
-        setLocationRelativeTo(null); // despues de pack(), para que si quede centrada
+        panelTablero.setModeloVisual(modeloVisual);
+        panelLateral.setModeloVisual(modeloVisual);
+        cartelTurno.setModeloVisual(modeloVisual);
     }
 
-    // ------------------------------------------
-    // Observer (notificado por el Modelo Visual)
-    // ------------------------------------------
-
-    // Swing solo se puede tocar desde el hilo de eventos (EDT). Hoy todo
-    // corre ahi, pero cuando lleguen mensajes de red el modelo notificara
-    // desde otro hilo: la Vista se protege sola y se reenvia al EDT.
+    // Lo llama el Modelo Visual cuando algo cambia patron Observer
     @Override
     public void actualizar() {
 
@@ -95,213 +104,108 @@ public class VistaTablero extends JFrame implements Observador {
             return;
         }
 
-        actualizarEtiquetaEstado();
-        panelTablero.repaint();
-    }
-
-    private void actualizarEtiquetaEstado() {
-
-        if (modeloVisual.isJuegoTerminado()) {
-            lblEstado.setForeground(Color.BLACK);
-            lblEstado.setText(textoResultado());
+        if (modeloVisual == null) {
             return;
         }
 
-        Jugador actual = modeloVisual.getJugadorActual();
-
-        StringBuilder texto = new StringBuilder("Turno de ");
-        texto.append(actual.getNombre());
-        texto.append("     ");
-
-        for (Jugador jugador : modeloVisual.getJugadores()) {
-            texto.append(jugador.getNombre())
-                    .append(": ")
-                    .append(jugador.getPuntaje())
-                    .append("     ");
-        }
-
-        lblEstado.setForeground(modeloVisual.getColor(actual));
-        lblEstado.setText(texto.toString());
-    }
-
-    private String textoResultado() {
-
-        List<Jugador> ganadores = modeloVisual.getGanadores();
-        int cuadros = ganadores.get(0).getPuntaje();
-
-        if (ganadores.size() == 1) {
-            return "Juego terminado. Gana " + ganadores.get(0).getNombre()
-                    + " (" + cuadros + " cuadros)";
-        }
-
-        StringBuilder nombres = new StringBuilder();
-        for (int i = 0; i < ganadores.size(); i++) {
-            if (i > 0) {
-                nombres.append(", ");
-            }
-            nombres.append(ganadores.get(i).getNombre());
-        }
-
-        return "Juego terminado. Empate entre " + nombres + " (" + cuadros + " cuadros c/u)";
-    }
-
-    // ------------------------------------------
-    // Coordenadas de pantalla
-    // ------------------------------------------
-
-    // Separacion en pixeles entre dos puntos vecinos.
-    private double tamanoCelda() {
-        return (double) AREA_TABLERO / (modeloVisual.getTamano() - 1);
-    }
-
-    private int coordenadaX(int columna) {
-        return MARGEN + (int) Math.round(columna * tamanoCelda());
-    }
-
-    private int coordenadaY(int fila) {
-        return MARGEN + (int) Math.round(fila * tamanoCelda());
-    }
-
-    // ------------------------------------------
-    // Panel de dibujo
-    // ------------------------------------------
-
-    private class PanelTablero extends JPanel {
-
-        PanelTablero() {
-
-            setBackground(Color.WHITE);
-
-            addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    manejarClic(e.getX(), e.getY());
-                }
-            });
-        }
-
-        // Se busca el PUNTO mas cercano al clic (no la arista mas
-        // cercana): el flujo es clic en un punto, clic en otro punto.
-        private void manejarClic(int x, int y) {
-
-            if (modeloVisual == null || controlador == null || modeloVisual.isJuegoTerminado()) {
-                return;
-            }
-
-            Punto masCercano = puntoMasCercano(x, y);
-
-            if (masCercano != null) {
-                controlador.clicEnPunto(masCercano);
+        // Cartel "TURNO DE ..." cada vez que cambia el jugador en turno
+        // si completa un cuadro y repite turno, no cambia y no se repite
+        if (!modeloVisual.isJuegoTerminado()) {
+            Jugador actual = modeloVisual.getJugadorActual();
+            if (actual != ultimoAnunciado) {
+                ultimoAnunciado = actual;
+                cartelTurno.anunciar("¡TURNO DE " + actual.getNombre().toUpperCase() + "!", panelTablero);
             }
         }
 
-        private Punto puntoMasCercano(int x, int y) {
+        panelTablero.repaint();
+        panelLateral.repaint();
+    }
 
-            int tamano = modeloVisual.getTamano();
-            Punto mejor = null;
-            double mejorDistancia = Math.min(TOLERANCIA_CLIC_MAXIMA, tamanoCelda() / 2);
+    // ------------------------------------------
+    // Cartel que oscurece la pantalla un instante al empezar cada turno
+    // (el "TU TURNO!!!" del storyboard) se pinta en el glass pane
+    // ------------------------------------------
 
-            for (int fila = 0; fila < tamano; fila++) {
-                for (int columna = 0; columna < tamano; columna++) {
+    private static class CartelTurno extends JComponent {
 
-                    double dx = x - coordenadaX(columna);
-                    double dy = y - coordenadaY(fila);
-                    double distancia = Math.sqrt(dx * dx + dy * dy);
+        private static final long DURACION_MS = 1300;
 
-                    if (distancia < mejorDistancia) {
-                        mejorDistancia = distancia;
-                        mejor = new Punto(fila, columna);
-                    }
-                }
+        private IConsultaModeloVisual modeloVisual;
+        private String texto = "";
+        private JComponent referencia; // el cartel se centra sobre el tablero
+        private long inicio;
+        private final Timer reloj = new Timer(25, e -> avanzar());
+
+        CartelTurno() {
+            setOpaque(false);
+            setVisible(false);
+        }
+
+        void setModeloVisual(IConsultaModeloVisual modeloVisual) {
+            this.modeloVisual = modeloVisual;
+        }
+
+        void anunciar(String texto, JComponent referencia) {
+            this.texto = texto;
+            this.referencia = referencia;
+            this.inicio = System.nanoTime();
+            setVisible(true);
+            reloj.restart();
+        }
+
+        private double progreso() {
+            return Math.min(1.0, (System.nanoTime() - inicio) / 1_000_000.0 / DURACION_MS);
+        }
+
+        private void avanzar() {
+            if (progreso() >= 1.0) {
+                reloj.stop();
+                setVisible(false);
+            } else {
+                repaint();
             }
-
-            return mejor;
         }
 
         @Override
         protected void paintComponent(Graphics g) {
 
-            super.paintComponent(g);
+            double t = progreso();
+            // Aparece rapido, se queda y se desvanece al final
+            double opacidad = t < 0.1 ? t / 0.1 : (t > 0.7 ? Math.max(0, (1 - t) / 0.3) : 1);
+            double entrada = 1 - Math.pow(1 - Math.min(1, t / 0.2), 3); // 0 -> 1 suave
 
-            if (modeloVisual == null) {
-                return;
+            Graphics2D g2 = (Graphics2D) g.create();
+            Tema.suavizar(g2);
+
+            g2.setColor(new Color(0, 0, 0, (int) (165 * opacidad)));
+            g2.fillRect(0, 0, getWidth(), getHeight());
+
+            Rectangle zona = referencia == null
+                    ? new Rectangle(0, 0, getWidth(), getHeight())
+                    : SwingUtilities.convertRectangle(referencia.getParent(), referencia.getBounds(), this);
+
+            // Se mide el texto real y se reduce lo necesario para que quepa en el tablero
+            double tamano = zona.height * 0.12;
+            g2.setFont(Tema.fuente(Font.BOLD, tamano));
+            double ancho = g2.getFontMetrics().stringWidth(texto);
+            if (ancho > zona.width * 0.9) {
+                tamano *= zona.width * 0.9 / ancho;
             }
+            tamano *= 0.88 + 0.12 * entrada; // pequeno efecto de entrada
+            g2.setFont(Tema.fuente(Font.BOLD, tamano));
+            FontMetrics fm = g2.getFontMetrics();
 
-            Graphics2D g2 = (Graphics2D) g;
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            dibujarCuadrosCompletados(g2);
-            dibujarLineas(g2);
-            dibujarPuntos(g2);
-        }
-
-        private void dibujarCuadrosCompletados(Graphics2D g2) {
-
-            for (Cuadrado cuadrado : modeloVisual.getCuadros()) {
-
-                int fila = cuadrado.getEsquinaSupIzq().getFila();
-                int columna = cuadrado.getEsquinaSupIzq().getColumna();
-
-                int x = coordenadaX(columna);
-                int y = coordenadaY(fila);
-                int ancho = coordenadaX(columna + 1) - x;
-                int alto = coordenadaY(fila + 1) - y;
-
-                g2.setColor(colorSuave(modeloVisual.getColor(cuadrado.getJugador())));
-                g2.fillRect(x, y, ancho, alto);
+            Color color = Tema.TEXTO;
+            if (modeloVisual != null && !modeloVisual.isJuegoTerminado()) {
+                color = Tema.mezclar(modeloVisual.getColor(modeloVisual.getJugadorActual()), Color.WHITE, 0.55);
             }
-        }
+            g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) (255 * opacidad)));
+            g2.drawString(texto,
+                    (float) (zona.getCenterX() - fm.stringWidth(texto) / 2.0),
+                    (float) (zona.getCenterY() + (fm.getAscent() - fm.getDescent()) / 2.0));
 
-        private void dibujarLineas(Graphics2D g2) {
-
-            float grosor = (float) Math.max(2, Math.min(4, tamanoCelda() / 10));
-            g2.setStroke(new BasicStroke(grosor));
-
-            for (Linea linea : modeloVisual.getLineas()) {
-
-                g2.setColor(modeloVisual.getColor(linea.getJugador()));
-
-                g2.drawLine(
-                        coordenadaX(linea.getPuntoA().getColumna()), coordenadaY(linea.getPuntoA().getFila()),
-                        coordenadaX(linea.getPuntoB().getColumna()), coordenadaY(linea.getPuntoB().getFila()));
-            }
-        }
-
-        // Pinta los puntos normales en gris, el punto seleccionado en
-        // naranja (mas grande) y sus vecinos validos en verde -- igual
-        // que "aparecen los puntos remarcados" del bosquejo.
-        private void dibujarPuntos(Graphics2D g2) {
-
-            int tamano = modeloVisual.getTamano();
-            Punto seleccionado = modeloVisual.getPuntoSeleccionado();
-            List<Punto> resaltados = modeloVisual.getPuntosResaltados();
-
-            int radioPunto = (int) Math.max(2, Math.min(RADIO_PUNTO_MAXIMO, tamanoCelda() / 8));
-
-            for (int fila = 0; fila < tamano; fila++) {
-                for (int columna = 0; columna < tamano; columna++) {
-
-                    Punto actual = new Punto(fila, columna);
-                    int x = coordenadaX(columna);
-                    int y = coordenadaY(fila);
-
-                    if (actual.equals(seleccionado)) {
-                        g2.setColor(Color.ORANGE);
-                        int radio = radioPunto + 2;
-                        g2.fillOval(x - radio, y - radio, radio * 2, radio * 2);
-                    } else if (resaltados.contains(actual)) {
-                        g2.setColor(new Color(60, 180, 60));
-                        g2.fillOval(x - radioPunto, y - radioPunto, radioPunto * 2, radioPunto * 2);
-                    } else {
-                        g2.setColor(Color.DARK_GRAY);
-                        g2.fillOval(x - radioPunto, y - radioPunto, radioPunto * 2, radioPunto * 2);
-                    }
-                }
-            }
-        }
-
-        private Color colorSuave(Color color) {
-            return new Color(color.getRed(), color.getGreen(), color.getBlue(), 90);
+            g2.dispose();
         }
     }
 }
