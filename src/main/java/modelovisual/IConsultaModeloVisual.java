@@ -19,5 +19,8 @@ public interface IConsultaModeloVisual extends IConsultaModelo {
     List<Punto> getPuntosResaltados();
 
     Color getColor(Jugador jugador);
+    
+    Jugador getJugadorLocal();
 
+    boolean esMiTurno();
 }

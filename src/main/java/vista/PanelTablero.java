@@ -53,7 +53,7 @@ class PanelTablero extends JPanel {
                 if (modeloVisual == null) {
                     return;
                 }
-                Punto nuevo = modeloVisual.isJuegoTerminado() ? null : puntoMasCercano(e.getX(), e.getY());
+                Punto nuevo = !modeloVisual.esMiTurno() ? null : puntoMasCercano(e.getX(), e.getY());
                 if (nuevo == null ? puntoBajoMouse != null : !nuevo.equals(puntoBajoMouse)) {
                     puntoBajoMouse = nuevo;
                     setCursor(Cursor.getPredefinedCursor(nuevo == null ? Cursor.DEFAULT_CURSOR : Cursor.HAND_CURSOR));

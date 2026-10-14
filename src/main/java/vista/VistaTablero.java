@@ -97,7 +97,9 @@ public class VistaTablero extends JFrame implements Observador {
         this.modeloVisual = modeloVisual;
         panelTablero.setModeloVisual(modeloVisual);
         panelLateral.setModeloVisual(modeloVisual);
+        jugadorAsignado = modeloVisual.getJugadorLocal();
         panelLateral.setJugadorAsignado(jugadorAsignado);
+        setTitle("Timbiriche - " + jugadorAsignado.getNombre() + " (" + nombreColor(modeloVisual.getColor(jugadorAsignado)) + ")");
         cartelTurno.setModeloVisual(modeloVisual);
     }
 

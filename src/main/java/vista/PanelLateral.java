@@ -209,7 +209,7 @@ private void dibujarTarjeta(Graphics2D g2, double x,
                     : (esTurno ? "Tu turno" : "Tu jugador");
 
             dibujarTarjeta(g2, 0, 0, getWidth(), getHeight(), jugador,
-                    terminado ? Estado.ESPERA : (esTurno ? Estado.ACTIVO : Estado.SIGUIENTE), subtitulo, true);
+                    terminado ? Estado.ESPERA : (esTurno ? Estado.ACTIVO : Estado.ESPERA), subtitulo, true);
 
             g2.dispose();
         }
@@ -247,7 +247,8 @@ private void dibujarTarjeta(Graphics2D g2, double x,
             boolean terminado = modeloVisual.isJuegoTerminado();
 
             for (int i = 0; i < rivales.size(); i++) {
-                Estado estado = (i == 0 && !terminado) ? Estado.SIGUIENTE : Estado.ESPERA;
+                Estado estado = (!terminado && rivales.get(i).equals(modeloVisual.getJugadorActual()))
+                        ? Estado.ACTIVO : Estado.ESPERA;
                 dibujarTarjeta(g2, margen, margen + i * (altoFila + separacion),
                         w - 2 * margen, altoFila, rivales.get(i), estado, null, false);
             }

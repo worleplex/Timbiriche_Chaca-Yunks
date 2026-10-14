@@ -24,11 +24,14 @@ public class ControlModeloVisual {
 
     private final IConsultaModelo consultaModeloGeneral;
     private final IOperacionesModelo operacionesModeloGeneral;
+    private final Jugador jugadorLocal; // el jugador dueno de este tablero
     private Punto puntoSeleccionado;
     private final Map<Jugador, Color> colores; // dato visual: color de cada jugador en este tablero
 
     public ControlModeloVisual(IConsultaModelo consultaModeloGeneral,
-                               IOperacionesModelo operacionesModeloGeneral) {
+                               IOperacionesModelo operacionesModeloGeneral,
+                               Jugador jugadorLocal) {
+        this.jugadorLocal = jugadorLocal;
         this.consultaModeloGeneral = consultaModeloGeneral;
         this.operacionesModeloGeneral = operacionesModeloGeneral;
 
@@ -47,7 +50,8 @@ public class ControlModeloVisual {
     
     public boolean clicEnPunto(Punto punto) {
 
-        if (consultaModeloGeneral.isJuegoTerminado()) {
+        // Solo puede jugar el dueno de este tablero Y solo en su turno.
+        if (!esMiTurno()) {
             return false;
         }
 
@@ -89,6 +93,15 @@ public class ControlModeloVisual {
     // ------------------------------------------
     // Consultas
     // ------------------------------------------
+
+    public Jugador getJugadorLocal() {
+        return jugadorLocal;
+    }
+
+    public boolean esMiTurno() {
+        return !consultaModeloGeneral.isJuegoTerminado()
+                && jugadorLocal.equals(consultaModeloGeneral.getJugadorActual());
+    }
 
     public boolean haySeleccion() {
         return puntoSeleccionado != null;

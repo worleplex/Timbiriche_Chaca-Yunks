@@ -40,28 +40,27 @@ public class Ensamblador {
         // El tamano del tablero lo decide el Modelo General segun los jugadores.
         FachadaModelo modeloGeneral = new FachadaModelo(jugadores);
 
-        // FachadaModelo (fachada del Modelo General) implementa ambas interfaces
-        // (consulta y operaciones); el Modelo Visual recibe las dos por
-        // separado -- solo usa cada una para lo que le corresponde.
-        FachadaModeloVisual modeloVisual = new FachadaModeloVisual(modeloGeneral, modeloGeneral);
-
-        Controlador controlador = new Controlador();
-
         List<VistaTablero> vistas = new ArrayList<>();
 
         // ========================================
         // 2. Establecer las asociaciones
         // ========================================
 
-        controlador.setModeloVisual(modeloVisual);
-        modeloGeneral.agregarObservador(modeloVisual);
-        
-        for (int i = 0; i < numJugadores.getAsInt(); i++) {
+        for (int i = 0; i < jugadores.size(); i++) {
+
+            Jugador jugador = jugadores.get(i);
+
+            FachadaModeloVisual modeloVisual = new FachadaModeloVisual(modeloGeneral, modeloGeneral, jugador);
+            Controlador controlador = new Controlador();
             VistaTablero vista = new VistaTablero(i + 1);
-            vista.setControlador(controlador);
-            vista.setModeloVisual(modeloVisual);
-            vista.setJugadorAsignado(jugadores.get(i));
-            modeloVisual.agregarObservador(vista);
+
+            controlador.setModeloVisual(modeloVisual);   // Controlador -> Modelo Visual
+            vista.setControlador(controlador);           // Vista -> Controlador
+            vista.setModeloVisual(modeloVisual);         // Vista -> Modelo Visual
+
+            modeloGeneral.agregarObservador(modeloVisual); // Modelo General -> Modelo Visual
+            modeloVisual.agregarObservador(vista);         // Modelo Visual -> Vista
+
             vistas.add(vista);
         }
 

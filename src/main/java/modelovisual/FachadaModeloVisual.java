@@ -23,9 +23,10 @@ public class FachadaModeloVisual extends SujetoObservado
     private final ControlModeloVisual control;
 
     public FachadaModeloVisual(IConsultaModelo consultaModeloGeneral,
-                        IOperacionesModelo operacionesModeloGeneral) {
+                        IOperacionesModelo operacionesModeloGeneral,
+                        Jugador jugadorLocal) {
         this.consultaModeloGeneral = consultaModeloGeneral;
-        this.control = new ControlModeloVisual(consultaModeloGeneral, operacionesModeloGeneral);
+        this.control = new ControlModeloVisual(consultaModeloGeneral, operacionesModeloGeneral, jugadorLocal);
     }
 
     // ------------------------------------------
@@ -75,6 +76,16 @@ public class FachadaModeloVisual extends SujetoObservado
     @Override
     public Color getColor(Jugador jugador) {
         return control.getColor(jugador);
+    }
+
+    @Override
+    public Jugador getJugadorLocal() {
+        return control.getJugadorLocal();
+    }
+
+    @Override
+    public boolean esMiTurno() {
+        return control.esMiTurno();
     }
 
     // ------------------------------------------
