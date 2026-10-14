@@ -1,12 +1,7 @@
 package controlador;
 
-import modelo.Punto;
 import modelovisual.IOperacionesModeloVisual;
 
-/**
- *
- * @author julian izaguirre
- */
 public class Controlador {
 
     private IOperacionesModeloVisual modeloVisual;
@@ -15,7 +10,15 @@ public class Controlador {
         this.modeloVisual = modeloVisual;
     }
 
-    public void clicEnPunto(Punto punto) {
-        modeloVisual.clicEnPunto(punto);
+    public void clic(int x, int y, int anchoPanel, int altoPanel) {
+        modeloVisual.clic(x, y, anchoPanel, altoPanel);
+    }
+
+    public void mover(int x, int y, int anchoPanel, int altoPanel) {
+        modeloVisual.mover(x, y, anchoPanel, altoPanel);
+    }
+
+    public void salirDelTablero() {
+        modeloVisual.salirDelTablero();
     }
 }

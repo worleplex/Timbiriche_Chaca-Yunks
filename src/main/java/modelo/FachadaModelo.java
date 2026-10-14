@@ -4,17 +4,11 @@ import utilerias.SujetoObservado;
 
 import java.util.List;
 
-/**
- *
- * @author julian izaguirre
- */
 public class FachadaModelo extends SujetoObservado
         implements IOperacionesModelo, IConsultaModelo {
 
     private final Tablero control;
     
-    // La fachada ya no decide el tamano: eso es una regla del juego y la
-    // aplica el Tablero a partir de los jugadores.
     public FachadaModelo(List<Jugador> jugadores) {
         control = new Tablero(jugadores);
     }

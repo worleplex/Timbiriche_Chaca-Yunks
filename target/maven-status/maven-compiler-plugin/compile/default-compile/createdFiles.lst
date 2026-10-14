@@ -1,6 +1,8 @@
 modelo\Punto.class
 modelo\Tablero.class
+modelovisual\CuadroVisual.class
 vista\PanelTablero$1.class
+modelovisual\FilaResultado.class
 utilerias\Observador.class
 vista\Tema.class
 modelo\Linea.class
@@ -13,8 +15,11 @@ vista\PanelTablero.class
 vista\VistaTablero$CartelTurno.class
 controlador\Controlador.class
 ensamblador\Ensamblador.class
+modelovisual\PuntoVisual.class
+modelovisual\LineaVisual.class
 vista\PanelLateral$PanelAcciones.class
 modelo\Cuadrado.class
+vista\PanelTablero$2.class
 modelovisual\FachadaModeloVisual.class
 modelovisual\ControlModeloVisual.class
 modelo\IOperacionesModelo.class
@@ -24,6 +29,8 @@ modelo\Jugador.class
 modelovisual\IConsultaModeloVisual.class
 modelo\FachadaModelo.class
 modelo\IConsultaModelo.class
-vista\PanelLateral$Estado.class
+modelovisual\EstadoPunto.class
 vista\PanelLateral$PanelAcciones$1.class
+modelovisual\TarjetaJugador.class
+modelovisual\ResultadoPartida.class
 vista\PanelLateral$TarjetaPrincipal.class

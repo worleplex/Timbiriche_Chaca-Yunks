@@ -1,36 +1,31 @@
 package vista;
 
 import controlador.Controlador;
-import modelo.Cuadrado;
-import modelo.Jugador;
-import modelo.Linea;
-import modelo.Punto;
+import modelovisual.CuadroVisual;
+import modelovisual.FilaResultado;
 import modelovisual.IConsultaModeloVisual;
+import modelovisual.LineaVisual;
+import modelovisual.PuntoVisual;
+import modelovisual.ResultadoPartida;
 import javax.swing.JPanel;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Ellipse2D;
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.awt.geom.Line2D;
+import java.awt.geom.Rectangle2D;
 import java.util.List;
 
-/**
- * este dibuja el tablero y recibe los clics osea se adapta al tamaño
- * disponible y como solo dibuja lo que le dice el modeloVisual y avisa
- * los clics al controlador y yap
- * @author julian izaguirre
- */
 class PanelTablero extends JPanel {
 
     private IConsultaModeloVisual modeloVisual;
     private Controlador controlador;
-    private Punto puntoBajoMouse; // solo para resaltar el punto sobre el que esta el cursor
 
     PanelTablero() {
 
@@ -39,34 +34,26 @@ class PanelTablero extends JPanel {
         MouseAdapter raton = new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (modeloVisual == null || controlador == null || modeloVisual.isJuegoTerminado()) {
+                if (modeloVisual == null || controlador == null) {
                     return;
                 }
-                Punto punto = puntoMasCercano(e.getX(), e.getY());
-                if (punto != null) {
-                    controlador.clicEnPunto(punto);
-                }
+                controlador.clic(e.getX(), e.getY(), getWidth(), getHeight());
             }
 
             @Override
             public void mouseMoved(MouseEvent e) {
-                if (modeloVisual == null) {
+                if (modeloVisual == null || controlador == null) {
                     return;
                 }
-                Punto nuevo = !modeloVisual.esMiTurno() ? null : puntoMasCercano(e.getX(), e.getY());
-                if (nuevo == null ? puntoBajoMouse != null : !nuevo.equals(puntoBajoMouse)) {
-                    puntoBajoMouse = nuevo;
-                    setCursor(Cursor.getPredefinedCursor(nuevo == null ? Cursor.DEFAULT_CURSOR : Cursor.HAND_CURSOR));
-                    repaint();
-                }
+                controlador.mover(e.getX(), e.getY(), getWidth(), getHeight());
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                if (puntoBajoMouse != null) {
-                    puntoBajoMouse = null;
-                    repaint();
+                if (modeloVisual == null || controlador == null) {
+                    return;
                 }
+                controlador.salirDelTablero();
             }
         };
         addMouseListener(raton);
@@ -81,63 +68,17 @@ class PanelTablero extends JPanel {
         this.controlador = controlador;
     }
 
-    // ------------------------------------------
-    // Geometria (se recalcula con el tamano actual del panel)
-    // ------------------------------------------
-
-    private double lado() {
-        double margen = Math.min(getWidth(), getHeight()) * 0.045;
-        return Math.min(getWidth(), getHeight()) - 2 * margen;
-    }
-
-    private double origenX() {
-        return (getWidth() - lado()) / 2;
-    }
-
-    private double origenY() {
-        return (getHeight() - lado()) / 2;
-    }
-
-    // Separacion en pixeles entre dos puntos vecinos.
-    private double celda() {
-        return lado() / (modeloVisual.getTamano() - 1);
-    }
-
-    private double coordenadaX(int columna) {
-        return origenX() + columna * celda();
-    }
-
-    private double coordenadaY(int fila) {
-        return origenY() + fila * celda();
-    }
-
-    // Se busca el PUNTO mas cercano al cursor (el flujo es clic en un punto,
-    // clic en otro punto).
-    private Punto puntoMasCercano(int x, int y) {
-
-        int tamano = modeloVisual.getTamano();
-        double tolerancia = Math.min(celda() / 2, 22);
-        double mejorDistancia = tolerancia;
-        Punto mejor = null;
-
-        for (int fila = 0; fila < tamano; fila++) {
-            for (int columna = 0; columna < tamano; columna++) {
-
-                double distancia = Math.hypot(x - coordenadaX(columna), y - coordenadaY(fila));
-
-                if (distancia < mejorDistancia) {
-                    mejorDistancia = distancia;
-                    mejor = new Punto(fila, columna);
-                }
-            }
+    void actualizarCursor() {
+        if (modeloVisual == null) {
+            return;
         }
-
-        return mejor;
+        setCursor(Cursor.getPredefinedCursor(
+                modeloVisual.hayPuntoBajoMouse() ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
     }
 
-    // ------------------------------------------
-    // Dibujo
-    // ------------------------------------------
+    private double celda() {
+        return modeloVisual.getTamanoCelda(getWidth(), getHeight());
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -156,8 +97,9 @@ class PanelTablero extends JPanel {
             dibujarLineas(g2);
             dibujarPuntos(g2);
 
-            if (modeloVisual.isJuegoTerminado()) {
-                dibujarResultado(g2, arco);
+            ResultadoPartida resultado = modeloVisual.getResultado();
+            if (resultado != null) {
+                dibujarResultado(g2, arco, resultado);
             }
         }
 
@@ -166,14 +108,10 @@ class PanelTablero extends JPanel {
 
     private void dibujarCuadrosCompletados(Graphics2D g2) {
 
-        for (Cuadrado cuadrado : modeloVisual.getCuadros()) {
+        for (CuadroVisual cuadro : modeloVisual.getCuadros(getWidth(), getHeight())) {
 
-            Punto esquina = cuadrado.getEsquinaSupIzq();
-            double x = coordenadaX(esquina.getColumna());
-            double y = coordenadaY(esquina.getFila());
-
-            g2.setColor(Tema.conAlfa(modeloVisual.getColor(cuadrado.getJugador()), 115));
-            g2.fill(new java.awt.geom.Rectangle2D.Double(x, y, celda(), celda()));
+            g2.setColor(Tema.conAlfa(cuadro.getColor(), 115));
+            g2.fill(new Rectangle2D.Double(cuadro.getX(), cuadro.getY(), cuadro.getLado(), cuadro.getLado()));
         }
     }
 
@@ -182,47 +120,43 @@ class PanelTablero extends JPanel {
         float grosor = (float) Math.max(2, Math.min(7, celda() * 0.14));
         g2.setStroke(new BasicStroke(grosor, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
 
-        for (Linea linea : modeloVisual.getLineas()) {
+        for (LineaVisual linea : modeloVisual.getLineas(getWidth(), getHeight())) {
 
-            g2.setColor(modeloVisual.getColor(linea.getJugador()));
-            g2.draw(new java.awt.geom.Line2D.Double(
-                    coordenadaX(linea.getPuntoA().getColumna()), coordenadaY(linea.getPuntoA().getFila()),
-                    coordenadaX(linea.getPuntoB().getColumna()), coordenadaY(linea.getPuntoB().getFila())));
+            g2.setColor(linea.getColor());
+            g2.draw(new Line2D.Double(linea.getX1(), linea.getY1(), linea.getX2(), linea.getY2()));
         }
     }
 
-    // Puntos normales en lavanda; el punto bajo el cursor crece un poco; el
-    // seleccionado lleva un aro blanco y sus vecinos validos se resaltan con
-    // el color del jugador en turno (los "puntos remarcados").
     private void dibujarPuntos(Graphics2D g2) {
 
-        int tamano = modeloVisual.getTamano();
-        Punto seleccionado = modeloVisual.getPuntoSeleccionado();
-        List<Punto> resaltados = modeloVisual.getPuntosResaltados();
-        Color colorTurno = modeloVisual.isJuegoTerminado()
-                ? Tema.PUNTO : modeloVisual.getColor(modeloVisual.getJugadorActual());
+        Color colorTurno = modeloVisual.getColorTurno();
+        if (colorTurno == null) {
+            colorTurno = Tema.PUNTO;
+        }
 
         double radio = Math.max(1.6, Math.min(4.5, celda() * 0.1));
 
-        for (int fila = 0; fila < tamano; fila++) {
-            for (int columna = 0; columna < tamano; columna++) {
+        for (PuntoVisual punto : modeloVisual.getPuntos(getWidth(), getHeight())) {
 
-                Punto actual = new Punto(fila, columna);
-                double x = coordenadaX(columna);
-                double y = coordenadaY(fila);
+            double x = punto.getX();
+            double y = punto.getY();
 
-                if (actual.equals(seleccionado)) {
+            switch (punto.getEstado()) {
+                case SELECCIONADO:
                     circulo(g2, x, y, radio * 3.1, Tema.conAlfa(colorTurno, 80));
                     circulo(g2, x, y, radio * 2.3, Tema.TEXTO);
                     circulo(g2, x, y, radio * 1.6, colorTurno);
-                } else if (resaltados.contains(actual)) {
+                    break;
+                case RESALTADO:
                     circulo(g2, x, y, radio * 3.0, Tema.conAlfa(colorTurno, 70));
                     circulo(g2, x, y, radio * 1.9, colorTurno);
-                } else if (actual.equals(puntoBajoMouse)) {
+                    break;
+                case HOVER:
                     circulo(g2, x, y, radio * 1.9, Tema.TEXTO);
-                } else {
+                    break;
+                default:
                     circulo(g2, x, y, radio, Tema.PUNTO);
-                }
+                    break;
             }
         }
     }
@@ -232,23 +166,19 @@ class PanelTablero extends JPanel {
         g2.fill(new Ellipse2D.Double(x - radio, y - radio, radio * 2, radio * 2));
     }
 
-    // Fin del juego: tabla de posiciones con los puntajes (el PDF la pide
-    // sin importar como termine la partida).
-    private void dibujarResultado(Graphics2D g2, double arcoTablero) {
+    private void dibujarResultado(Graphics2D g2, double arcoTablero, ResultadoPartida resultado) {
 
         int w = getWidth();
         int h = getHeight();
-        double u = Math.min(w, h) / 600.0; // unidad de escala
+        double u = Math.min(w, h) / 600.0;
 
         g2.setColor(new Color(0, 0, 0, 175));
         g2.fill(Tema.redondeado(0, 0, w, h, arcoTablero));
 
-        List<Jugador> ganadores = modeloVisual.getGanadores();
-        List<Jugador> posiciones = new ArrayList<>(modeloVisual.getJugadores());
-        posiciones.sort(Comparator.comparingInt(Jugador::getPuntaje).reversed());
+        List<FilaResultado> filas = resultado.getFilas();
 
         double anchoCaja = 400 * u;
-        double altoCaja = (150 + 40 * posiciones.size()) * u;
+        double altoCaja = (150 + 40 * filas.size()) * u;
         double x = (w - anchoCaja) / 2;
         double y = (h - altoCaja) / 2;
 
@@ -258,37 +188,26 @@ class PanelTablero extends JPanel {
         g2.setStroke(new BasicStroke((float) (2 * u)));
         g2.draw(Tema.redondeado(x, y, anchoCaja, altoCaja, 26 * u));
 
-        centrado(g2, "¡FIN DEL JUEGO!", Tema.fuente(java.awt.Font.BOLD, 30 * u), Tema.TEXTO, w / 2.0, y + 52 * u);
+        centrado(g2, resultado.getTitulo(), Tema.fuente(Font.BOLD, 30 * u), Tema.TEXTO, w / 2.0, y + 52 * u);
 
-        String subtitulo = ganadores.size() == 1
-                ? "Gana " + ganadores.get(0).getNombre()
-                : "Empate entre " + nombres(ganadores);
-        Color colorSub = ganadores.size() == 1 ? modeloVisual.getColor(ganadores.get(0)) : Tema.PUNTO;
-        centrado(g2, subtitulo, Tema.fuente(java.awt.Font.BOLD, 18 * u), colorSub, w / 2.0, y + 86 * u);
+        Color colorSub = resultado.getColorSubtitulo() != null ? resultado.getColorSubtitulo() : Tema.PUNTO;
+        centrado(g2, resultado.getSubtitulo(), Tema.fuente(Font.BOLD, 18 * u), colorSub, w / 2.0, y + 86 * u);
 
         double fila = y + 128 * u;
-        for (Jugador jugador : posiciones) {
+        for (FilaResultado filaResultado : filas) {
 
-            int posicion = 1;
-            for (Jugador otro : posiciones) {
-                if (otro.getPuntaje() > jugador.getPuntaje()) {
-                    posicion++;
-                }
-            }
-
-            Color color = modeloVisual.getColor(jugador);
             double izquierda = x + 36 * u;
 
-            g2.setColor(Tema.conAlfa(color, 255));
+            g2.setColor(Tema.conAlfa(filaResultado.getColor(), 255));
             g2.fill(Tema.redondeado(izquierda, fila - 20 * u, 8 * u, 26 * u, 6 * u));
 
-            g2.setFont(Tema.fuente(java.awt.Font.BOLD, 18 * u));
+            g2.setFont(Tema.fuente(Font.BOLD, 18 * u));
             g2.setColor(Tema.TEXTO);
-            g2.drawString(posicion + ".", (float) (izquierda + 20 * u), (float) fila);
-            g2.setFont(Tema.fuente(java.awt.Font.PLAIN, 18 * u));
-            g2.drawString(jugador.getNombre(), (float) (izquierda + 52 * u), (float) fila);
+            g2.drawString(filaResultado.getPosicion() + ".", (float) (izquierda + 20 * u), (float) fila);
+            g2.setFont(Tema.fuente(Font.PLAIN, 18 * u));
+            g2.drawString(filaResultado.getNombre(), (float) (izquierda + 52 * u), (float) fila);
 
-            String puntos = jugador.getPuntaje() + (jugador.getPuntaje() == 1 ? " punto" : " puntos");
+            String puntos = filaResultado.getTextoPuntaje();
             FontMetrics fm = g2.getFontMetrics();
             g2.drawString(puntos, (float) (x + anchoCaja - 36 * u - fm.stringWidth(puntos)), (float) fila);
 
@@ -296,19 +215,7 @@ class PanelTablero extends JPanel {
         }
     }
 
-    private String nombres(List<Jugador> jugadores) {
-
-        StringBuilder texto = new StringBuilder();
-        for (int i = 0; i < jugadores.size(); i++) {
-            if (i > 0) {
-                texto.append(", ");
-            }
-            texto.append(jugadores.get(i).getNombre());
-        }
-        return texto.toString();
-    }
-
-    private void centrado(Graphics2D g2, String texto, java.awt.Font fuente, Color color, double centroX, double base) {
+    private void centrado(Graphics2D g2, String texto, Font fuente, Color color, double centroX, double base) {
         g2.setFont(fuente);
         g2.setColor(color);
         FontMetrics fm = g2.getFontMetrics();

@@ -3,10 +3,6 @@ package vista;
 import javax.swing.JOptionPane;
 import java.util.OptionalInt;
 
-/**
- *
- * @author julian izaguirre
- */
 public class DialogoNumeroJugadores {
     public OptionalInt pedirNumeroDeJugadores(int minimo, int maximo) {
 

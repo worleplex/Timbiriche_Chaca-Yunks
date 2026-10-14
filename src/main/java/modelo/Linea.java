@@ -1,9 +1,5 @@
 package modelo;
 
-/**
- *
- * @author julian izaguirre
- */
 public class Linea {
 
     private final Punto puntoA;
@@ -28,8 +24,6 @@ public class Linea {
         return jugador;
     }
 
-    // Dos lineas son la misma si conectan los mismos dos puntos,
-    // sin importar el orden ni quien la dibujo.
     @Override
     public boolean equals(Object obj) {
 

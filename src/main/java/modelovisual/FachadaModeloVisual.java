@@ -1,135 +1,113 @@
 package modelovisual;
 
-import modelo.Cuadrado;
 import modelo.IConsultaModelo;
 import modelo.IOperacionesModelo;
 import modelo.Jugador;
-import modelo.Linea;
-import modelo.Punto;
 import utilerias.Observador;
 import utilerias.SujetoObservado;
 
 import java.awt.Color;
 import java.util.List;
 
-/**
- *
- * @author julian izaguirre
- */
 public class FachadaModeloVisual extends SujetoObservado
         implements IOperacionesModeloVisual, IConsultaModeloVisual, Observador {
 
-    private final IConsultaModelo consultaModeloGeneral;
     private final ControlModeloVisual control;
 
     public FachadaModeloVisual(IConsultaModelo consultaModeloGeneral,
                         IOperacionesModelo operacionesModeloGeneral,
                         Jugador jugadorLocal) {
-        this.consultaModeloGeneral = consultaModeloGeneral;
         this.control = new ControlModeloVisual(consultaModeloGeneral, operacionesModeloGeneral, jugadorLocal);
     }
 
-    // ------------------------------------------
-    // IOperacionesModeloVisual (la usa el Controlador)
-    // ------------------------------------------
-
     @Override
-    public void clicEnPunto(Punto punto) {
+    public void clic(int x, int y, int anchoPanel, int altoPanel) {
 
-        boolean cambioVisual = control.clicEnPunto(punto);
+        boolean cambioVisual = control.clic(x, y, anchoPanel, altoPanel);
 
         if (cambioVisual) {
             notificarObservadores();
         }
     }
 
-    // ------------------------------------------
-    // Observador del Modelo General de Juego
-    // ------------------------------------------
+    @Override
+    public void mover(int x, int y, int anchoPanel, int altoPanel) {
 
-    // El Modelo General notifica que aplico una jugada valida.
+        boolean cambioVisual = control.mover(x, y, anchoPanel, altoPanel);
+
+        if (cambioVisual) {
+            notificarObservadores();
+        }
+    }
+
+    @Override
+    public void salirDelTablero() {
+
+        boolean cambioVisual = control.salirDelTablero();
+
+        if (cambioVisual) {
+            notificarObservadores();
+        }
+    }
+
     @Override
     public void actualizar() {
-        control.limpiarSeleccion(); // la jugada ya se confirmo
-        notificarObservadores();    // avisa a la Vista que hay que redibujar
-    }
-
-    // ------------------------------------------
-    // IConsultaModeloVisual (la usa la Vista) -- datos visuales
-    // ------------------------------------------
-
-    @Override
-    public boolean haySeleccion() {
-        return control.haySeleccion();
+        control.limpiarSeleccion();
+        notificarObservadores();
     }
 
     @Override
-    public Punto getPuntoSeleccionado() {
-        return control.getPuntoSeleccionado();
+    public String getTituloVentana() {
+        return control.getTituloVentana();
     }
 
     @Override
-    public List<Punto> getPuntosResaltados() {
-        return control.getPuntosResaltados();
+    public String tomarAnuncioTurno() {
+        return control.tomarAnuncioTurno();
     }
 
     @Override
-    public Color getColor(Jugador jugador) {
-        return control.getColor(jugador);
+    public Color getColorTurno() {
+        return control.getColorTurno();
     }
 
     @Override
-    public Jugador getJugadorLocal() {
-        return control.getJugadorLocal();
+    public boolean hayPuntoBajoMouse() {
+        return control.hayPuntoBajoMouse();
     }
 
     @Override
-    public boolean esMiTurno() {
-        return control.esMiTurno();
-    }
-
-    // ------------------------------------------
-    // IConsultaModeloVisual (la usa la Vista) -- datos del juego,
-    // obtenidos del Modelo General (el "get()" del bosquejo)
-    // ------------------------------------------
-
-    @Override
-    public int getTamano() {
-        return consultaModeloGeneral.getTamano();
+    public double getTamanoCelda(int anchoPanel, int altoPanel) {
+        return control.getTamanoCelda(anchoPanel, altoPanel);
     }
 
     @Override
-    public List<Linea> getLineas() {
-        return consultaModeloGeneral.getLineas();
+    public List<CuadroVisual> getCuadros(int anchoPanel, int altoPanel) {
+        return control.getCuadros(anchoPanel, altoPanel);
     }
 
     @Override
-    public List<Cuadrado> getCuadros() {
-        return consultaModeloGeneral.getCuadros();
+    public List<LineaVisual> getLineas(int anchoPanel, int altoPanel) {
+        return control.getLineas(anchoPanel, altoPanel);
     }
 
     @Override
-    public List<Jugador> getJugadores() {
-        return consultaModeloGeneral.getJugadores();
+    public List<PuntoVisual> getPuntos(int anchoPanel, int altoPanel) {
+        return control.getPuntos(anchoPanel, altoPanel);
     }
 
     @Override
-    public Jugador getJugadorActual() {
-        return consultaModeloGeneral.getJugadorActual();
+    public ResultadoPartida getResultado() {
+        return control.getResultado();
     }
 
     @Override
-    public boolean isJuegoTerminado() {
-        return consultaModeloGeneral.isJuegoTerminado();
+    public TarjetaJugador getTarjetaPrincipal() {
+        return control.getTarjetaPrincipal();
     }
 
     @Override
-    public List<Punto> getPuntosConectables(Punto desde) {
-        return consultaModeloGeneral.getPuntosConectables(desde);
-    }
-
-    @Override
-    public List<Jugador> getGanadores() {
-        return consultaModeloGeneral.getGanadores();
+    public List<TarjetaJugador> getTarjetasRivales() {
+        return control.getTarjetasRivales();
     }
 }

@@ -2,13 +2,9 @@ package modelo;
 
 import java.util.List;
 
-/**
- *
- * @author julian izaguirre
- */
 public interface IConsultaModelo {
 
-    int getTamano(); // puntos por lado
+    int getTamano();
 
     List<Linea> getLineas();
 

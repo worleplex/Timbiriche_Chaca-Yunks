@@ -10,22 +10,15 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import modelo.Jugador;
 import modelovisual.IConsultaModeloVisual;
+import modelovisual.TarjetaJugador;
 
-/**
- *
- * @author julian izaguirre
- */
 public class PanelLateral extends JPanel {
-    private enum Estado { ACTIVO, SIGUIENTE, ESPERA }
     private IConsultaModeloVisual modeloVisual;
-    private Jugador jugadorAsignado;
     
     PanelLateral() {
         setOpaque(false);
@@ -36,9 +29,6 @@ public class PanelLateral extends JPanel {
     }
     
     public void agregar(JComponent componente, int fila, double pesoAltura, int separacion) {
-        // uso el gridbagConstraints que define las restricciones y 
-        // reglas de posicionamiento para los componentes gráficos que se
-        // organizan utilizando un contenedor con el GridBagLayout de arriba que puse
         GridBagConstraints restriccion = new GridBagConstraints();
         restriccion.gridx = 0;
         restriccion.gridy = fila;
@@ -48,45 +38,15 @@ public class PanelLateral extends JPanel {
         restriccion.insets = new java.awt.Insets(0, 0, separacion, 0);
         add(componente, restriccion);
     }
-    // ou
     void setModeloVisual(IConsultaModeloVisual modeloVisual) {
         this.modeloVisual = modeloVisual;
     }
 
-    // Cada ventana tiene un jugador fijo; el tablero sigue siendo compartido
-    void setJugadorAsignado(Jugador jugador) {
-        this.jugadorAsignado = jugador;
-    }
+    private void dibujarTarjeta(Graphics2D g2, double x, double y, double ancho, double alto,
+            TarjetaJugador tarjeta, boolean grande) {
 
-    private Jugador jugadorDeLaTarjeta() {
-        if (jugadorAsignado != null) return jugadorAsignado;
-        if (modeloVisual.isJuegoTerminado()) return modeloVisual.getGanadores().get(0);
-        return modeloVisual.getJugadorActual();
-    }
-    
-    private List<Jugador> rivales() {
-        List<Jugador> todos = modeloVisual.getJugadores();
-        int inicio = todos.indexOf(jugadorDeLaTarjeta());
-        if (inicio < 0) inicio = 0;
-
-        List<Jugador> lista = new ArrayList<>();
-        for (int i = 1; i < todos.size(); i++) {
-            lista.add(todos.get((inicio + i) % todos.size()));
-        }
-        return lista;
-    }
-    // pa usarla en esta class
-    private static String textoPuntos(int puntos) {
-        return puntos == 1 ? "punto" : "puntos";
-    }
-    // la tarjeta de un jugador va a estar largo
-private void dibujarTarjeta(Graphics2D g2, double x,
-    double y, double ancho, double alto,
-    Jugador jugador, Estado estado, String subtitulo, 
-    boolean grande) {
-
-        Color brillante = modeloVisual.getColor(jugador);
-        boolean activa = estado == Estado.ACTIVO;
+        Color brillante = tarjeta.getColor();
+        boolean activa = tarjeta.isActiva();
 
         double arco = alto * (grande ? 0.16 : 0.3);
         double margen = alto * (grande ? 0.09 : 0.1);
@@ -96,7 +56,7 @@ private void dibujarTarjeta(Graphics2D g2, double x,
         g2.setColor(Tema.cuerpo(brillante));
         g2.fill(Tema.redondeado(x, y, ancho, alto, arco));
 
-        if (estado != Estado.ESPERA) {
+        if (activa) {
             g2.setColor(brillante);
             g2.setStroke(new BasicStroke((float) grosorBorde));
             g2.draw(Tema.redondeado(x + grosorBorde / 2, y + 
@@ -108,7 +68,6 @@ private void dibujarTarjeta(Graphics2D g2, double x,
         Tema.dibujarAvatar(g2, x + margen, y + margen, ladoAvatar, 
         brillante, !activa);
 
-        // Placa oscura con el texto
         double placaX = x + margen * 2 + ladoAvatar;
         double placaAncho = x + ancho - margen - placaX;
         double placaAlto = alto - 2 * margen;
@@ -122,11 +81,11 @@ private void dibujarTarjeta(Graphics2D g2, double x,
         double textoX = placaX + placaAncho * 0.07;
         double textoAncho = placaAncho * 0.88;
 
-        int puntos = jugador.getPuntaje();
+        String subtitulo = tarjeta.getSubtitulo();
 
         if (grande) {
             double tamNombre = alto * 0.17;
-            escribir(g2, jugador.getNombre(), Tema.fuente(Font.PLAIN, 
+            escribir(g2, tarjeta.getNombre(), Tema.fuente(Font.PLAIN, 
             tamNombre), colorTexto,
                     textoX, y + margen + interior + tamNombre * 0.95, 
                     textoAncho);
@@ -137,22 +96,21 @@ private void dibujarTarjeta(Graphics2D g2, double x,
                         textoX, y + margen + placaAlto - interior - 
                         alto * 0.17, textoAncho);
             }
-            dibujarPuntos(g2, puntos, alto * 0.15, colorTexto, textoX, 
+            dibujarPuntos(g2, tarjeta, alto * 0.15, colorTexto, textoX, 
             y + margen + placaAlto - interior);
         } else {
             double tamNombre = alto * 0.27;
-            escribir(g2, jugador.getNombre(), Tema.fuente(Font.PLAIN, 
+            escribir(g2, tarjeta.getNombre(), Tema.fuente(Font.PLAIN, 
             tamNombre), colorTexto,
                     textoX, y + margen + placaAlto * 0.46, textoAncho);
-            dibujarPuntos(g2, puntos, alto * 0.2, colorTexto, textoX, 
+            dibujarPuntos(g2, tarjeta, alto * 0.2, colorTexto, textoX, 
             y + margen + placaAlto * 0.86);
         }
     }
 
-    // "12 puntos" con el numero mas grande que la palabra
-    private void dibujarPuntos(Graphics2D g2, int puntos, double tamano, Color color, double x, double base) {
+    private void dibujarPuntos(Graphics2D g2, TarjetaJugador tarjeta, double tamano, Color color, double x, double base) {
 
-        String numero = String.valueOf(puntos);
+        String numero = String.valueOf(tarjeta.getPuntos());
         Font fuenteNumero = Tema.fuente(Font.PLAIN, tamano * 1.15);
         g2.setFont(fuenteNumero);
         g2.setColor(color);
@@ -160,10 +118,9 @@ private void dibujarTarjeta(Graphics2D g2, double x,
 
         double ancho = g2.getFontMetrics().stringWidth(numero);
         g2.setFont(Tema.fuente(Font.PLAIN, tamano * 0.78));
-        g2.drawString(" " + textoPuntos(puntos), (float) (x + ancho), (float) base);
+        g2.drawString(" " + tarjeta.getTextoPuntos(), (float) (x + ancho), (float) base);
     }
 
-    // Escribe el texto recortandolo con "..." si no cabe
     private void escribir(Graphics2D g2, String texto, Font fuente, Color color, double x, double base, double anchoMaximo) {
 
         g2.setFont(fuente);
@@ -181,10 +138,6 @@ private void dibujarTarjeta(Graphics2D g2, double x,
         g2.drawString(visible, (float) x, (float) base);
     }
 
-    // ------------------------------------------
-    // Componentes internos
-    // ------------------------------------------
-
     private class TarjetaPrincipal extends JComponent {
 
         TarjetaPrincipal() {
@@ -201,15 +154,8 @@ private void dibujarTarjeta(Graphics2D g2, double x,
             Graphics2D g2 = (Graphics2D) g.create();
             Tema.suavizar(g2);
 
-            boolean terminado = modeloVisual.isJuegoTerminado();
-            Jugador jugador = jugadorDeLaTarjeta();
-            boolean esTurno = !terminado && jugador.equals(modeloVisual.getJugadorActual());
-            String subtitulo = terminado
-                    ? (modeloVisual.getGanadores().contains(jugador) ? "Ganador" : "Partida terminada")
-                    : (esTurno ? "Tu turno" : "Tu jugador");
-
-            dibujarTarjeta(g2, 0, 0, getWidth(), getHeight(), jugador,
-                    terminado ? Estado.ESPERA : (esTurno ? Estado.ACTIVO : Estado.ESPERA), subtitulo, true);
+            dibujarTarjeta(g2, 0, 0, getWidth(), getHeight(),
+                    modeloVisual.getTarjetaPrincipal(), true);
 
             g2.dispose();
         }
@@ -237,20 +183,15 @@ private void dibujarTarjeta(Graphics2D g2, double x,
             g2.setColor(Tema.PANEL);
             g2.fill(Tema.redondeado(0, 0, w, h, h * 0.045));
 
-            // Siempre hay lugar para 3 filas (4 jugadores como maximo), asi
-            // las tarjetas miden lo mismo juegue quien juegue
             double margen = h * 0.035;
             double separacion = h * 0.02;
             double altoFila = (h - 2 * margen - 2 * separacion) / 3;
 
-            List<Jugador> rivales = rivales();
-            boolean terminado = modeloVisual.isJuegoTerminado();
+            List<TarjetaJugador> rivales = modeloVisual.getTarjetasRivales();
 
             for (int i = 0; i < rivales.size(); i++) {
-                Estado estado = (!terminado && rivales.get(i).equals(modeloVisual.getJugadorActual()))
-                        ? Estado.ACTIVO : Estado.ESPERA;
                 dibujarTarjeta(g2, margen, margen + i * (altoFila + separacion),
-                        w - 2 * margen, altoFila, rivales.get(i), estado, null, false);
+                        w - 2 * margen, altoFila, rivales.get(i), false);
             }
 
             g2.dispose();
@@ -265,9 +206,6 @@ private void dibujarTarjeta(Graphics2D g2, double x,
             setPreferredSize(new Dimension(10, 10));
             setLayout(new GridLayout(2, 1, 0, 6));
 
-            // Estas acciones necesitan reglas que el Modelo General todavia no
-            // tiene (ponerse de acuerdo entre jugadores, retirar a un jugador),
-            // asi que por ahora se muestran pero desactivadas
             add(crearBoton("Terminar Partida"));
             add(crearBoton("Abandonar Partida"));
         }
@@ -315,7 +253,6 @@ private void dibujarTarjeta(Graphics2D g2, double x,
             g2.dispose();
         }
 
-        // Margen interno proporcional al tamano actual del panel
         @Override
         public java.awt.Insets getInsets() {
             int margenY = (int) (getHeight() * 0.11);

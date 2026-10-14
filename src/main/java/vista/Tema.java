@@ -8,10 +8,6 @@ import java.awt.Shape;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
 
-/**
- * aparencia compartida de la vista
- * @author julian izaguirre
- */
 final class Tema {
     static final Color FONDO = new Color(13, 11, 24);
     static final Color PANEL = new Color(22, 18, 40);
@@ -24,7 +20,6 @@ final class Tema {
 
     private Tema() {
     }
-    // t = 0 -> color a; t = 1 -> color b.
     static Color mezclar(Color a, Color b, double t) {
         return new Color(
                 (int) Math.round(a.getRed() + (b.getRed() - a.getRed()) * t),
@@ -36,7 +31,6 @@ final class Tema {
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), alfa);
     }
     
-    // Color de cuerpo de una tarjeta el color brillante del jugador, mas oscuro
     static Color cuerpo(Color brillante) {
         return new Color(
                 (int) (brillante.getRed() * 0.55),
@@ -62,9 +56,6 @@ final class Tema {
         return new RoundRectangle2D.Double(x, y, ancho, alto, arco, arco);
     }
 
-    // Avatar por defecto el todo feo del anti african 
-    // cuando exista el avatar real del jugador lo modificamos aqui abajo tolano no le pongas a el perriyunk
-    // se dibujara aqui en su lugar o ou
     static void dibujarAvatar(Graphics2D g2, double x, double y, double lado, Color brillante, boolean atenuado) {
 
         Shape marco = redondeado(x, y, lado, lado, lado * 0.12);

@@ -1,13 +1,11 @@
 package modelovisual;
 
-import modelo.Punto;
-
-/**
- *
- * @author julian izaguirre
- */
 public interface IOperacionesModeloVisual {
 
-    void clicEnPunto(Punto punto);
+    void clic(int x, int y, int anchoPanel, int altoPanel);
+
+    void mover(int x, int y, int anchoPanel, int altoPanel);
+
+    void salirDelTablero();
 
 }

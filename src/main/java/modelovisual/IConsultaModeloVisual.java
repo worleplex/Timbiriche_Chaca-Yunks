@@ -1,26 +1,29 @@
 package modelovisual;
 
-import modelo.IConsultaModelo;
-import modelo.Jugador;
-import modelo.Punto;
-
 import java.awt.Color;
 import java.util.List;
 
-/**
- *
- * @author julian izaguirre
- */
-public interface IConsultaModeloVisual extends IConsultaModelo {
-    boolean haySeleccion();
+public interface IConsultaModeloVisual {
 
-    Punto getPuntoSeleccionado();
+    String getTituloVentana();
 
-    List<Punto> getPuntosResaltados();
+    String tomarAnuncioTurno();
 
-    Color getColor(Jugador jugador);
-    
-    Jugador getJugadorLocal();
+    Color getColorTurno();
 
-    boolean esMiTurno();
+    boolean hayPuntoBajoMouse();
+
+    double getTamanoCelda(int anchoPanel, int altoPanel);
+
+    List<CuadroVisual> getCuadros(int anchoPanel, int altoPanel);
+
+    List<LineaVisual> getLineas(int anchoPanel, int altoPanel);
+
+    List<PuntoVisual> getPuntos(int anchoPanel, int altoPanel);
+
+    ResultadoPartida getResultado();
+
+    TarjetaJugador getTarjetaPrincipal();
+
+    List<TarjetaJugador> getTarjetasRivales();
 }

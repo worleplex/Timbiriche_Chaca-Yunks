@@ -1,9 +1,5 @@
 package modelo;
 
-/**
- *
- * @author julian izaguirre
- */
 public class Jugador {
 
     private final String nombre;
