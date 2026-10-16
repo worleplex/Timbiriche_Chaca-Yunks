@@ -65,7 +65,6 @@ class PanelTablero extends JPanel {
         this.lienzo = new LienzoTablero(modeloVisual);
     }
 
-    /** Pinta unicamente los cambios recibidos; el resto del tablero no se vuelve a dibujar. */
     void aplicarCambios(List<PuntoVisual> puntos, List<LineaVisual> lineas, List<CuadroVisual> cuadros) {
 
         if (lienzo == null) {
