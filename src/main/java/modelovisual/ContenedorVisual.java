@@ -8,15 +8,11 @@ import java.util.Map;
 
 public class ContenedorVisual implements IConsultaContenedor {
 
-    private final Map<Long, PuntoVisual> puntos = new LinkedHashMap<>();
+    private final Map<CoordenadaTablero, PuntoVisual> puntos = new LinkedHashMap<>();
     private final List<LineaVisual> lineas = new ArrayList<>();
     private final List<CuadroVisual> cuadros = new ArrayList<>();
 
     ContenedorVisual() {
-    }
-
-    private static long clave(int fila, int columna) {
-        return ((long) fila << 32) | (columna & 0xFFFFFFFFL);
     }
 
     void limpiar() {
@@ -31,11 +27,11 @@ public class ContenedorVisual implements IConsultaContenedor {
 
     void agregarPunto(PuntoVisual nuevo) {
 
-        long clave = clave(nuevo.getFila(), nuevo.getColumna());
+        CoordenadaTablero clave = new CoordenadaTablero(nuevo.getX(), nuevo.getY());
         PuntoVisual previo = puntos.get(clave);
 
         if (previo != null) {
-            nuevo = new PuntoVisual(nuevo.getFila(), nuevo.getColumna(),
+            nuevo = new PuntoVisual(nuevo.getX(), nuevo.getY(),
                     nuevo.getEstado(), previo.getEstadoAnterior());
         }
 
@@ -66,8 +62,8 @@ public class ContenedorVisual implements IConsultaContenedor {
     }
 
     @Override
-    public EstadoPunto getEstadoAnterior(int fila, int columna) {
-        PuntoVisual punto = puntos.get(clave(fila, columna));
+    public EstadoPunto getEstadoAnterior(double x, double y) {
+        PuntoVisual punto = puntos.get(new CoordenadaTablero(x, y));
         return punto == null ? EstadoPunto.NORMAL : punto.getEstadoAnterior();
     }
 }

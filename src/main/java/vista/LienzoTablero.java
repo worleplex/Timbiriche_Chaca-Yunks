@@ -1,5 +1,6 @@
 package vista;
 
+import modelovisual.CoordenadaTablero;
 import modelovisual.CuadroVisual;
 import modelovisual.EstadoPunto;
 import modelovisual.IConsultaModeloVisual;
@@ -16,62 +17,84 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 class LienzoTablero {
 
     private final IConsultaModeloVisual modeloVisual;
-    private final int tamano;
-
-    private final Color[][] lineasH;
-    private final Color[][] lineasV;
-    private final Color[][] cuadros;
-    private final EstadoPunto[][] puntos;
+    private final Map<CoordenadaTablero, EstadoPunto> puntos = new LinkedHashMap<>();
+    private final List<LineaVisual> lineas = new ArrayList<>();
+    private final List<CuadroVisual> cuadros = new ArrayList<>();
 
     private BufferedImage imagen;
     private int ancho;
     private int alto;
     private double escala;
 
+    private double pxEscala;
+    private double pxX;
+    private double pxY;
+
     LienzoTablero(IConsultaModeloVisual modeloVisual) {
         this.modeloVisual = modeloVisual;
-        this.tamano = modeloVisual.getTamanoTablero();
-        this.lineasH = new Color[tamano][tamano];
-        this.lineasV = new Color[tamano][tamano];
-        this.cuadros = new Color[tamano][tamano];
-        this.puntos = new EstadoPunto[tamano][tamano];
+        for (CoordenadaTablero punto : modeloVisual.getPuntosTablero()) {
+            puntos.put(punto, EstadoPunto.NORMAL);
+        }
+    }
+
+    private void calibrar(int w, int h) {
+        pxEscala = modeloVisual.getEscala(w, h);
+        pxX = modeloVisual.getDesplazamientoX(w, h);
+        pxY = modeloVisual.getDesplazamientoY(w, h);
+    }
+
+    private double px(double x) {
+        return pxX + x * pxEscala;
+    }
+
+    private double py(double y) {
+        return pxY + y * pxEscala;
+    }
+
+    private double celdaPx() {
+        return modeloVisual.getSeparacionPuntos() * pxEscala;
     }
 
     List<Rectangle> aplicar(List<PuntoVisual> puntosCambiados, List<LineaVisual> lineasNuevas,
                             List<CuadroVisual> cuadrosNuevos, int w, int h) {
 
+        calibrar(w, h);
+
         List<Rectangle2D> zonas = new ArrayList<>();
-        double celda = modeloVisual.getTamanoCelda(w, h);
+        double celda = celdaPx();
         double radio = radioPunto(celda);
         double grosor = grosorLinea(celda);
 
         for (CuadroVisual cuadro : cuadrosNuevos) {
-            cuadros[cuadro.getFila()][cuadro.getColumna()] = cuadro.getColor();
-            double x = modeloVisual.getCoordenadaX(cuadro.getColumna(), w, h);
-            double y = modeloVisual.getCoordenadaY(cuadro.getFila(), w, h);
-            zonas.add(expandido(x, y, x + celda, y + celda, grosor / 2));
+            cuadros.add(cuadro);
+            double x = px(cuadro.getX());
+            double y = py(cuadro.getY());
+            double lado = cuadro.getLado() * pxEscala;
+            zonas.add(expandido(x, y, x + lado, y + lado, grosor / 2));
         }
 
         for (LineaVisual linea : lineasNuevas) {
-            registrarLinea(linea);
-            double x1 = modeloVisual.getCoordenadaX(linea.getColumna1(), w, h);
-            double y1 = modeloVisual.getCoordenadaY(linea.getFila1(), w, h);
-            double x2 = modeloVisual.getCoordenadaX(linea.getColumna2(), w, h);
-            double y2 = modeloVisual.getCoordenadaY(linea.getFila2(), w, h);
+            lineas.add(linea);
+            double x1 = px(linea.getX1());
+            double y1 = py(linea.getY1());
+            double x2 = px(linea.getX2());
+            double y2 = py(linea.getY2());
             zonas.add(expandido(Math.min(x1, x2), Math.min(y1, y2),
                     Math.max(x1, x2), Math.max(y1, y2), grosor / 2));
         }
 
         for (PuntoVisual punto : puntosCambiados) {
-            puntos[punto.getFila()][punto.getColumna()] = punto.getEstado();
+            puntos.put(new CoordenadaTablero(punto.getX(), punto.getY()), punto.getEstado());
             double reach = radio * Math.max(factor(punto.getEstadoAnterior()), factor(punto.getEstado()));
-            double x = modeloVisual.getCoordenadaX(punto.getColumna(), w, h);
-            double y = modeloVisual.getCoordenadaY(punto.getFila(), w, h);
+            double x = px(punto.getX());
+            double y = py(punto.getY());
             zonas.add(expandido(x, y, x, y, reach));
         }
 
@@ -92,18 +115,6 @@ class LienzoTablero {
         g2.dispose();
 
         return repintar;
-    }
-
-    private void registrarLinea(LineaVisual linea) {
-
-        int fila = Math.min(linea.getFila1(), linea.getFila2());
-        int columna = Math.min(linea.getColumna1(), linea.getColumna2());
-
-        if (linea.getFila1() == linea.getFila2()) {
-            lineasH[fila][columna] = linea.getColor();
-        } else {
-            lineasV[fila][columna] = linea.getColor();
-        }
     }
 
     void dibujar(Graphics2D destino, int w, int h) {
@@ -144,15 +155,15 @@ class LienzoTablero {
 
     private void recomponer(Graphics2D g2, Rectangle zona, int w, int h) {
 
-        double celda = modeloVisual.getTamanoCelda(w, h);
+        calibrar(w, h);
+
+        double celda = celdaPx();
         double radio = radioPunto(celda);
         double grosor = grosorLinea(celda);
         double margen = Math.max(radio * 3.1, grosor / 2) + 2;
 
-        int cDesde = indice(zona.getMinX() - margen, true, celda, modeloVisual.getCoordenadaX(0, w, h));
-        int cHasta = indice(zona.getMaxX() + margen, false, celda, modeloVisual.getCoordenadaX(0, w, h));
-        int fDesde = indice(zona.getMinY() - margen, true, celda, modeloVisual.getCoordenadaY(0, w, h));
-        int fHasta = indice(zona.getMaxY() + margen, false, celda, modeloVisual.getCoordenadaY(0, w, h));
+        Rectangle2D alcance = new Rectangle2D.Double(zona.getMinX() - margen, zona.getMinY() - margen,
+                zona.getWidth() + 2 * margen, zona.getHeight() + 2 * margen);
 
         g2.setClip(zona);
 
@@ -162,30 +173,27 @@ class LienzoTablero {
         g2.setColor(Tema.PANEL);
         g2.fill(Tema.redondeado(0, 0, w, h, Math.min(w, h) * 0.05));
 
-        for (int f = fDesde; f <= Math.min(fHasta, tamano - 2); f++) {
-            for (int c = cDesde; c <= Math.min(cHasta, tamano - 2); c++) {
-                if (cuadros[f][c] != null) {
-                    g2.setColor(Tema.conAlfa(cuadros[f][c], 115));
-                    g2.fill(new Rectangle2D.Double(
-                            modeloVisual.getCoordenadaX(c, w, h), modeloVisual.getCoordenadaY(f, w, h),
-                            celda, celda));
-                }
+        for (CuadroVisual cuadro : cuadros) {
+            double x = px(cuadro.getX());
+            double y = py(cuadro.getY());
+            double lado = cuadro.getLado() * pxEscala;
+            if (alcance.intersects(x, y, lado, lado)) {
+                g2.setColor(Tema.conAlfa(cuadro.getColor(), 115));
+                g2.fill(new Rectangle2D.Double(x, y, lado, lado));
             }
         }
 
         g2.setStroke(new BasicStroke((float) grosor, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-        for (int f = fDesde; f <= fHasta; f++) {
-            for (int c = cDesde; c <= cHasta; c++) {
-                double x = modeloVisual.getCoordenadaX(c, w, h);
-                double y = modeloVisual.getCoordenadaY(f, w, h);
-                if (c < tamano - 1 && lineasH[f][c] != null) {
-                    g2.setColor(lineasH[f][c]);
-                    g2.draw(new Line2D.Double(x, y, x + celda, y));
-                }
-                if (f < tamano - 1 && lineasV[f][c] != null) {
-                    g2.setColor(lineasV[f][c]);
-                    g2.draw(new Line2D.Double(x, y, x, y + celda));
-                }
+        for (LineaVisual linea : lineas) {
+            double x1 = px(linea.getX1());
+            double y1 = py(linea.getY1());
+            double x2 = px(linea.getX2());
+            double y2 = py(linea.getY2());
+            if (alcance.intersects(Math.min(x1, x2), Math.min(y1, y2),
+                    Math.abs(x2 - x1), Math.abs(y2 - y1))
+                    || alcance.intersectsLine(x1, y1, x2, y2)) {
+                g2.setColor(linea.getColor());
+                g2.draw(new Line2D.Double(x1, y1, x2, y2));
             }
         }
 
@@ -194,11 +202,11 @@ class LienzoTablero {
             colorTurno = Tema.PUNTO;
         }
 
-        for (int f = fDesde; f <= fHasta; f++) {
-            for (int c = cDesde; c <= cHasta; c++) {
-                dibujarPunto(g2, modeloVisual.getCoordenadaX(c, w, h),
-                        modeloVisual.getCoordenadaY(f, w, h), radio, colorTurno,
-                        puntos[f][c] == null ? EstadoPunto.NORMAL : puntos[f][c]);
+        for (Map.Entry<CoordenadaTablero, EstadoPunto> punto : puntos.entrySet()) {
+            double x = px(punto.getKey().getX());
+            double y = py(punto.getKey().getY());
+            if (alcance.contains(x, y)) {
+                dibujarPunto(g2, x, y, radio, colorTurno, punto.getValue());
             }
         }
 
@@ -263,11 +271,5 @@ class LienzoTablero {
         int x1 = Math.min(w, (int) Math.ceil(zona.getMaxX()) + 2);
         int y1 = Math.min(h, (int) Math.ceil(zona.getMaxY()) + 2);
         return new Rectangle(x0, y0, Math.max(0, x1 - x0), Math.max(0, y1 - y0));
-    }
-
-    private int indice(double coordenada, boolean haciaAbajo, double celda, double origen) {
-        double posicion = (coordenada - origen) / celda;
-        int indice = haciaAbajo ? (int) Math.floor(posicion) : (int) Math.ceil(posicion);
-        return Math.max(0, Math.min(tamano - 1, indice));
     }
 }

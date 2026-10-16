@@ -64,23 +64,33 @@ public class FachadaModeloVisual
     }
 
     @Override
-    public int getTamanoTablero() {
-        return control.getTamanoTablero();
+    public List<CoordenadaTablero> getPuntosTablero() {
+        return control.getPuntosTablero();
     }
 
     @Override
-    public double getTamanoCelda(int anchoPanel, int altoPanel) {
-        return control.getTamanoCelda(anchoPanel, altoPanel);
+    public double getLadoTablero() {
+        return control.getLadoTablero();
     }
 
     @Override
-    public double getCoordenadaX(int columna, int anchoPanel, int altoPanel) {
-        return control.getCoordenadaX(columna, anchoPanel, altoPanel);
+    public double getSeparacionPuntos() {
+        return control.getSeparacionPuntos();
     }
 
     @Override
-    public double getCoordenadaY(int fila, int anchoPanel, int altoPanel) {
-        return control.getCoordenadaY(fila, anchoPanel, altoPanel);
+    public double getEscala(int anchoPanel, int altoPanel) {
+        return control.getEscala(anchoPanel, altoPanel);
+    }
+
+    @Override
+    public double getDesplazamientoX(int anchoPanel, int altoPanel) {
+        return control.getDesplazamientoX(anchoPanel, altoPanel);
+    }
+
+    @Override
+    public double getDesplazamientoY(int anchoPanel, int altoPanel) {
+        return control.getDesplazamientoY(anchoPanel, altoPanel);
     }
 
     @Override

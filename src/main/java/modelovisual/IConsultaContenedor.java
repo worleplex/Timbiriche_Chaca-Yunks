@@ -10,5 +10,5 @@ public interface IConsultaContenedor {
 
     List<CuadroVisual> getCuadrosNuevos();
 
-    EstadoPunto getEstadoAnterior(int fila, int columna);
+    EstadoPunto getEstadoAnterior(double x, double y);
 }

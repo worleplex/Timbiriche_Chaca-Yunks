@@ -13,13 +13,17 @@ public interface IConsultaModeloVisual {
 
     boolean hayPuntoBajoMouse();
 
-    int getTamanoTablero();
+    List<CoordenadaTablero> getPuntosTablero();
 
-    double getTamanoCelda(int anchoPanel, int altoPanel);
+    double getLadoTablero();
 
-    double getCoordenadaX(int columna, int anchoPanel, int altoPanel);
+    double getSeparacionPuntos();
 
-    double getCoordenadaY(int fila, int anchoPanel, int altoPanel);
+    double getEscala(int anchoPanel, int altoPanel);
+
+    double getDesplazamientoX(int anchoPanel, int altoPanel);
+
+    double getDesplazamientoY(int anchoPanel, int altoPanel);
 
     ResultadoPartida getResultado();
 

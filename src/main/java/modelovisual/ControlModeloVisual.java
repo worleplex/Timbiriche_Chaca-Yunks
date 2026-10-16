@@ -23,7 +23,7 @@ import java.util.Set;
 public class ControlModeloVisual {
 
     private static final Color[] PALETA = {
-        Color.BLUE, Color.RED, new Color(0, 150, 0), new Color(220, 140, 0)
+            Color.BLUE, Color.RED, new Color(0, 150, 0), new Color(220, 140, 0)
     };
 
     private static final String[] NOMBRES_COLOR = {"Azul", "Rojo", "Verde", "Naranja"};
@@ -39,14 +39,17 @@ public class ControlModeloVisual {
     private final Map<Jugador, Color> colores;
     private final Map<Jugador, String> nombresColor;
 
-    private Punto seleccionJuego;
-    private List<Punto> adyacentesJuego = Collections.emptyList();
+    private final TraductorCoordenadas traductor;
+    private final List<CoordenadaTablero> puntosTablero;
 
-    private Punto seleccionPintada;
-    private Set<Punto> adyacentesPintados = Collections.emptySet();
-    private Punto hoverPintado;
+    private CoordenadaTablero seleccionJuego;
+    private List<CoordenadaTablero> adyacentesJuego = Collections.emptyList();
 
-    private Punto puntoBajoMouse;
+    private CoordenadaTablero seleccionPintada;
+    private Set<CoordenadaTablero> adyacentesPintados = Collections.emptySet();
+    private CoordenadaTablero hoverPintado;
+
+    private CoordenadaTablero puntoBajoMouse;
 
     public ControlModeloVisual(IConsultaModelo consultaModeloGeneral,
                                IOperacionesModelo operacionesModeloGeneral,
@@ -58,6 +61,8 @@ public class ControlModeloVisual {
         this.operacionesModeloGeneral = operacionesModeloGeneral;
         this.contenedorJuego = contenedorJuego;
         this.gestorVisual = gestorVisual;
+        this.traductor = new TraductorCoordenadas(consultaModeloGeneral.getTamano());
+        this.puntosTablero = Collections.unmodifiableList(traductor.todosLosPuntos());
 
         this.colores = new HashMap<>();
         this.nombresColor = new HashMap<>();
@@ -70,16 +75,17 @@ public class ControlModeloVisual {
 
     public void clic(int x, int y, int anchoPanel, int altoPanel) {
 
-        Punto punto = getPuntoEnCoordenadas(x, y, anchoPanel, altoPanel);
+        CoordenadaTablero punto = getPuntoEnCoordenadas(x, y, anchoPanel, altoPanel);
 
         if (punto == null || !esMiTurno()) {
             return;
         }
 
-        Punto seleccionado = consultaModeloGeneral.getPuntoSeleccionado();
+        Punto seleccionadoJuego = consultaModeloGeneral.getPuntoSeleccionado();
+        CoordenadaTablero seleccionado = seleccionadoJuego == null ? null : traducir(seleccionadoJuego);
 
         if (seleccionado == null) {
-            operacionesModeloGeneral.seleccionarPunto(punto.getFila(), punto.getColumna());
+            operacionesModeloGeneral.seleccionarPunto(traductor.aFila(punto), traductor.aColumna(punto));
             return;
         }
 
@@ -89,17 +95,21 @@ public class ControlModeloVisual {
         }
 
         boolean jugadaValida = operacionesModeloGeneral.trazarLinea(
-                seleccionado.getFila(), seleccionado.getColumna(),
-                punto.getFila(), punto.getColumna());
+                traductor.aFila(seleccionado), traductor.aColumna(seleccionado),
+                traductor.aFila(punto), traductor.aColumna(punto));
 
         if (!jugadaValida) {
-            operacionesModeloGeneral.seleccionarPunto(punto.getFila(), punto.getColumna());
+            operacionesModeloGeneral.seleccionarPunto(traductor.aFila(punto), traductor.aColumna(punto));
         }
+    }
+
+    private CoordenadaTablero traducir(Punto punto) {
+        return traductor.aTablero(punto.getFila(), punto.getColumna());
     }
 
     public void mover(int x, int y, int anchoPanel, int altoPanel) {
 
-        Punto nuevo = esMiTurno() ? getPuntoEnCoordenadas(x, y, anchoPanel, altoPanel) : null;
+        CoordenadaTablero nuevo = esMiTurno() ? getPuntoEnCoordenadas(x, y, anchoPanel, altoPanel) : null;
 
         if (Objects.equals(nuevo, puntoBajoMouse)) {
             return;
@@ -132,21 +142,27 @@ public class ControlModeloVisual {
         gestorVisual.iniciarCambios();
 
         for (Linea linea : contenedorJuego.getLineasNuevas()) {
+            CoordenadaTablero a = traducir(linea.getPuntoA());
+            CoordenadaTablero b = traducir(linea.getPuntoB());
             gestorVisual.guardarLinea(new LineaVisual(
-                    linea.getPuntoA().getFila(), linea.getPuntoA().getColumna(),
-                    linea.getPuntoB().getFila(), linea.getPuntoB().getColumna(),
-                    getColor(linea.getJugador())));
+                    a.getX(), a.getY(), b.getX(), b.getY(), getColor(linea.getJugador())));
         }
 
         for (Cuadrado cuadrado : contenedorJuego.getCuadrosNuevos()) {
-            Punto esquina = cuadrado.getEsquinaSupIzq();
+            CoordenadaTablero esquina = traducir(cuadrado.getEsquinaSupIzq());
             gestorVisual.guardarCuadro(new CuadroVisual(
-                    esquina.getFila(), esquina.getColumna(), getColor(cuadrado.getJugador())));
+                    esquina.getX(), esquina.getY(), traductor.getSeparacion(),
+                    getColor(cuadrado.getJugador())));
         }
 
         if (contenedorJuego.hayCambioSeleccion()) {
-            seleccionJuego = contenedorJuego.getPuntoSeleccionado();
-            adyacentesJuego = contenedorJuego.getPuntosAdyacentes();
+            Punto seleccion = contenedorJuego.getPuntoSeleccionado();
+            seleccionJuego = seleccion == null ? null : traducir(seleccion);
+            List<CoordenadaTablero> adyacentes = new ArrayList<>();
+            for (Punto adyacente : contenedorJuego.getPuntosAdyacentes()) {
+                adyacentes.add(traducir(adyacente));
+            }
+            adyacentesJuego = adyacentes;
         }
 
         boolean hoverCambio = reconciliarPuntos();
@@ -160,12 +176,12 @@ public class ControlModeloVisual {
 
         boolean miTurno = esMiTurno();
 
-        Punto seleccionDeseada = seleccionJuego;
-        Set<Punto> adyacentesDeseados = seleccionDeseada == null
-                ? Collections.<Punto>emptySet() : new LinkedHashSet<>(adyacentesJuego);
-        Punto hoverDeseado = miTurno ? puntoBajoMouse : null;
+        CoordenadaTablero seleccionDeseada = seleccionJuego;
+        Set<CoordenadaTablero> adyacentesDeseados = seleccionDeseada == null
+                ? Collections.<CoordenadaTablero>emptySet() : new LinkedHashSet<>(adyacentesJuego);
+        CoordenadaTablero hoverDeseado = miTurno ? puntoBajoMouse : null;
 
-        Set<Punto> afectados = new LinkedHashSet<>();
+        Set<CoordenadaTablero> afectados = new LinkedHashSet<>();
         agregarSiNoNulo(afectados, seleccionPintada);
         afectados.addAll(adyacentesPintados);
         agregarSiNoNulo(afectados, hoverPintado);
@@ -173,8 +189,8 @@ public class ControlModeloVisual {
         afectados.addAll(adyacentesDeseados);
         agregarSiNoNulo(afectados, hoverDeseado);
 
-        Map<Punto, EstadoPunto> antes = new LinkedHashMap<>();
-        for (Punto punto : afectados) {
+        Map<CoordenadaTablero, EstadoPunto> antes = new LinkedHashMap<>();
+        for (CoordenadaTablero punto : afectados) {
             antes.put(punto, estadoPintado(punto));
         }
 
@@ -184,25 +200,25 @@ public class ControlModeloVisual {
         adyacentesPintados = adyacentesDeseados;
         hoverPintado = hoverDeseado;
 
-        for (Punto punto : afectados) {
+        for (CoordenadaTablero punto : afectados) {
             EstadoPunto despues = estadoPintado(punto);
             EstadoPunto anterior = antes.get(punto);
             if (despues != anterior) {
                 gestorVisual.guardarPunto(new PuntoVisual(
-                        punto.getFila(), punto.getColumna(), despues, anterior));
+                        punto.getX(), punto.getY(), despues, anterior));
             }
         }
 
         return hoverCambio;
     }
 
-    private void agregarSiNoNulo(Set<Punto> conjunto, Punto punto) {
+    private void agregarSiNoNulo(Set<CoordenadaTablero> conjunto, CoordenadaTablero punto) {
         if (punto != null) {
             conjunto.add(punto);
         }
     }
 
-    private EstadoPunto estadoPintado(Punto punto) {
+    private EstadoPunto estadoPintado(CoordenadaTablero punto) {
 
         if (punto.equals(seleccionPintada)) {
             return EstadoPunto.SELECCIONADO;
@@ -266,53 +282,49 @@ public class ControlModeloVisual {
         return "¡TURNO DE " + actual.getNombre().toUpperCase() + "!";
     }
 
-    public Punto getPuntoEnCoordenadas(int x, int y, int anchoPanel, int altoPanel) {
+    private CoordenadaTablero getPuntoEnCoordenadas(int x, int y, int anchoPanel, int altoPanel) {
 
-        int tamano = consultaModeloGeneral.getTamano();
-        double celda = getTamanoCelda(anchoPanel, altoPanel);
-        double tolerancia = Math.min(celda / 2, 22);
+        double escala = getEscala(anchoPanel, altoPanel);
+        double xTablero = (x - getDesplazamientoX(anchoPanel, altoPanel)) / escala;
+        double yTablero = (y - getDesplazamientoY(anchoPanel, altoPanel)) / escala;
 
-        int columna = (int) Math.round((x - origenX(anchoPanel, altoPanel)) / celda);
-        int fila = (int) Math.round((y - origenY(anchoPanel, altoPanel)) / celda);
+        // Misma tolerancia que antes: media celda, con tope de 22 pixeles.
+        double tolerancia = Math.min(traductor.getSeparacion() / 2, 22 / escala);
 
-        if (columna < 0 || columna >= tamano || fila < 0 || fila >= tamano) {
-            return null;
+        CoordenadaTablero cercano = null;
+        double mejor = tolerancia;
+        for (CoordenadaTablero punto : puntosTablero) {
+            double distancia = Math.hypot(xTablero - punto.getX(), yTablero - punto.getY());
+            if (distancia < mejor) {
+                mejor = distancia;
+                cercano = punto;
+            }
         }
-
-        double distancia = Math.hypot(
-                x - getCoordenadaX(columna, anchoPanel, altoPanel),
-                y - getCoordenadaY(fila, anchoPanel, altoPanel));
-
-        return distancia < tolerancia ? new Punto(fila, columna) : null;
+        return cercano;
     }
 
-    public int getTamanoTablero() {
-        return consultaModeloGeneral.getTamano();
+    public List<CoordenadaTablero> getPuntosTablero() {
+        return puntosTablero;
     }
 
-    public double getCoordenadaX(int columna, int anchoPanel, int altoPanel) {
-        return origenX(anchoPanel, altoPanel) + columna * getTamanoCelda(anchoPanel, altoPanel);
+    public double getLadoTablero() {
+        return TraductorCoordenadas.LADO;
     }
 
-    public double getCoordenadaY(int fila, int anchoPanel, int altoPanel) {
-        return origenY(anchoPanel, altoPanel) + fila * getTamanoCelda(anchoPanel, altoPanel);
+    public double getSeparacionPuntos() {
+        return traductor.getSeparacion();
     }
 
-    public double getTamanoCelda(int anchoPanel, int altoPanel) {
-        return lado(anchoPanel, altoPanel) / (consultaModeloGeneral.getTamano() - 1);
+    public double getEscala(int anchoPanel, int altoPanel) {
+        return Math.min(anchoPanel, altoPanel) / TraductorCoordenadas.LADO;
     }
 
-    private double lado(int anchoPanel, int altoPanel) {
-        double margen = Math.min(anchoPanel, altoPanel) * 0.045;
-        return Math.min(anchoPanel, altoPanel) - 2 * margen;
+    public double getDesplazamientoX(int anchoPanel, int altoPanel) {
+        return (anchoPanel - TraductorCoordenadas.LADO * getEscala(anchoPanel, altoPanel)) / 2;
     }
 
-    private double origenX(int anchoPanel, int altoPanel) {
-        return (anchoPanel - lado(anchoPanel, altoPanel)) / 2;
-    }
-
-    private double origenY(int anchoPanel, int altoPanel) {
-        return (altoPanel - lado(anchoPanel, altoPanel)) / 2;
+    public double getDesplazamientoY(int anchoPanel, int altoPanel) {
+        return (altoPanel - TraductorCoordenadas.LADO * getEscala(anchoPanel, altoPanel)) / 2;
     }
 
     public ResultadoPartida getResultado() {
