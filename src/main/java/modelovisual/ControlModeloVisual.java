@@ -1,6 +1,7 @@
 package modelovisual;
 
 import modelo.Cuadrado;
+import modelo.IConsultaContenedorJuego;
 import modelo.IConsultaModelo;
 import modelo.IOperacionesModelo;
 import modelo.Jugador;
@@ -12,9 +13,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class ControlModeloVisual {
 
@@ -28,19 +32,32 @@ public class ControlModeloVisual {
 
     private final IConsultaModelo consultaModeloGeneral;
     private final IOperacionesModelo operacionesModeloGeneral;
+    private final IConsultaContenedorJuego contenedorJuego;
+    private final GestorAlmacenamientoVisual gestorVisual;
     private final Jugador jugadorLocal;
-    private Punto puntoSeleccionado;
-    private Punto puntoBajoMouse;
     private Jugador ultimoAnunciado;
     private final Map<Jugador, Color> colores;
     private final Map<Jugador, String> nombresColor;
 
+    private Punto seleccionJuego;
+    private List<Punto> adyacentesJuego = Collections.emptyList();
+
+    private Punto seleccionPintada;
+    private Set<Punto> adyacentesPintados = Collections.emptySet();
+    private Punto hoverPintado;
+
+    private Punto puntoBajoMouse;
+
     public ControlModeloVisual(IConsultaModelo consultaModeloGeneral,
                                IOperacionesModelo operacionesModeloGeneral,
+                               IConsultaContenedorJuego contenedorJuego,
+                               GestorAlmacenamientoVisual gestorVisual,
                                Jugador jugadorLocal) {
         this.jugadorLocal = jugadorLocal;
         this.consultaModeloGeneral = consultaModeloGeneral;
         this.operacionesModeloGeneral = operacionesModeloGeneral;
+        this.contenedorJuego = contenedorJuego;
+        this.gestorVisual = gestorVisual;
 
         this.colores = new HashMap<>();
         this.nombresColor = new HashMap<>();
@@ -51,78 +68,155 @@ public class ControlModeloVisual {
         }
     }
 
-    public boolean clic(int x, int y, int anchoPanel, int altoPanel) {
+    public void clic(int x, int y, int anchoPanel, int altoPanel) {
 
         Punto punto = getPuntoEnCoordenadas(x, y, anchoPanel, altoPanel);
 
-        if (punto == null) {
-            return false;
+        if (punto == null || !esMiTurno()) {
+            return;
         }
 
-        return clicEnPunto(punto);
-    }
+        Punto seleccionado = consultaModeloGeneral.getPuntoSeleccionado();
 
-    private boolean clicEnPunto(Punto punto) {
-
-        if (!esMiTurno()) {
-            return false;
+        if (seleccionado == null) {
+            operacionesModeloGeneral.seleccionarPunto(punto.getFila(), punto.getColumna());
+            return;
         }
 
-        if (!haySeleccion()) {
-            alternarSeleccion(punto);
-            return true;
-        }
-
-        if (puntoSeleccionado.equals(punto)) {
-            alternarSeleccion(punto);
-            return true;
+        if (seleccionado.equals(punto)) {
+            operacionesModeloGeneral.deseleccionarPunto();
+            return;
         }
 
         boolean jugadaValida = operacionesModeloGeneral.trazarLinea(
-                puntoSeleccionado.getFila(), puntoSeleccionado.getColumna(),
+                seleccionado.getFila(), seleccionado.getColumna(),
                 punto.getFila(), punto.getColumna());
 
-        if (jugadaValida) {
-            return false;
+        if (!jugadaValida) {
+            operacionesModeloGeneral.seleccionarPunto(punto.getFila(), punto.getColumna());
         }
-
-        puntoSeleccionado = punto;
-        return true;
     }
 
-    public boolean mover(int x, int y, int anchoPanel, int altoPanel) {
+    public void mover(int x, int y, int anchoPanel, int altoPanel) {
 
         Punto nuevo = esMiTurno() ? getPuntoEnCoordenadas(x, y, anchoPanel, altoPanel) : null;
 
         if (Objects.equals(nuevo, puntoBajoMouse)) {
-            return false;
+            return;
         }
 
         puntoBajoMouse = nuevo;
-        return true;
+        publicarCambiosLocales();
     }
 
-    public boolean salirDelTablero() {
+    public void salirDelTablero() {
 
         if (puntoBajoMouse == null) {
-            return false;
+            return;
         }
 
         puntoBajoMouse = null;
-        return true;
+        publicarCambiosLocales();
     }
 
-    public void limpiarSeleccion() {
-        puntoSeleccionado = null;
-    }
-
-    private void alternarSeleccion(Punto punto) {
-
-        if (punto.equals(puntoSeleccionado)) {
-            puntoSeleccionado = null;
-        } else {
-            puntoSeleccionado = punto;
+    private void publicarCambiosLocales() {
+        gestorVisual.iniciarCambios();
+        boolean hoverCambio = reconciliarPuntos();
+        if (hoverCambio || gestorVisual.hayCambios()) {
+            gestorVisual.notificarCambios();
         }
+    }
+
+    public void procesarCambiosDelJuego() {
+
+        gestorVisual.iniciarCambios();
+
+        for (Linea linea : contenedorJuego.getLineasNuevas()) {
+            gestorVisual.guardarLinea(new LineaVisual(
+                    linea.getPuntoA().getFila(), linea.getPuntoA().getColumna(),
+                    linea.getPuntoB().getFila(), linea.getPuntoB().getColumna(),
+                    getColor(linea.getJugador())));
+        }
+
+        for (Cuadrado cuadrado : contenedorJuego.getCuadrosNuevos()) {
+            Punto esquina = cuadrado.getEsquinaSupIzq();
+            gestorVisual.guardarCuadro(new CuadroVisual(
+                    esquina.getFila(), esquina.getColumna(), getColor(cuadrado.getJugador())));
+        }
+
+        if (contenedorJuego.hayCambioSeleccion()) {
+            seleccionJuego = contenedorJuego.getPuntoSeleccionado();
+            adyacentesJuego = contenedorJuego.getPuntosAdyacentes();
+        }
+
+        boolean hoverCambio = reconciliarPuntos();
+
+        if (hoverCambio || gestorVisual.hayCambios()) {
+            gestorVisual.notificarCambios();
+        }
+    }
+
+    private boolean reconciliarPuntos() {
+
+        boolean miTurno = esMiTurno();
+
+        Punto seleccionDeseada = seleccionJuego;
+        Set<Punto> adyacentesDeseados = seleccionDeseada == null
+                ? Collections.<Punto>emptySet() : new LinkedHashSet<>(adyacentesJuego);
+        Punto hoverDeseado = miTurno ? puntoBajoMouse : null;
+
+        Set<Punto> afectados = new LinkedHashSet<>();
+        agregarSiNoNulo(afectados, seleccionPintada);
+        afectados.addAll(adyacentesPintados);
+        agregarSiNoNulo(afectados, hoverPintado);
+        agregarSiNoNulo(afectados, seleccionDeseada);
+        afectados.addAll(adyacentesDeseados);
+        agregarSiNoNulo(afectados, hoverDeseado);
+
+        Map<Punto, EstadoPunto> antes = new LinkedHashMap<>();
+        for (Punto punto : afectados) {
+            antes.put(punto, estadoPintado(punto));
+        }
+
+        boolean hoverCambio = !Objects.equals(hoverPintado, hoverDeseado);
+
+        seleccionPintada = seleccionDeseada;
+        adyacentesPintados = adyacentesDeseados;
+        hoverPintado = hoverDeseado;
+
+        for (Punto punto : afectados) {
+            EstadoPunto despues = estadoPintado(punto);
+            EstadoPunto anterior = antes.get(punto);
+            if (despues != anterior) {
+                gestorVisual.guardarPunto(new PuntoVisual(
+                        punto.getFila(), punto.getColumna(), despues, anterior));
+            }
+        }
+
+        return hoverCambio;
+    }
+
+    private void agregarSiNoNulo(Set<Punto> conjunto, Punto punto) {
+        if (punto != null) {
+            conjunto.add(punto);
+        }
+    }
+
+    private EstadoPunto estadoPintado(Punto punto) {
+
+        if (punto.equals(seleccionPintada)) {
+            return EstadoPunto.SELECCIONADO;
+        }
+
+        if (adyacentesPintados.contains(punto)) {
+            return EstadoPunto.RESALTADO;
+        }
+
+        if (punto.equals(hoverPintado)) {
+            return EstadoPunto.HOVER;
+        }
+
+        return EstadoPunto.NORMAL;
     }
 
     public Jugador getJugadorLocal() {
@@ -134,25 +228,8 @@ public class ControlModeloVisual {
                 && jugadorLocal.equals(consultaModeloGeneral.getJugadorActual());
     }
 
-    public boolean haySeleccion() {
-        return puntoSeleccionado != null;
-    }
-
-    public Punto getPuntoSeleccionado() {
-        return puntoSeleccionado;
-    }
-
     public boolean hayPuntoBajoMouse() {
-        return puntoBajoMouse != null && esMiTurno();
-    }
-
-    public List<Punto> getPuntosResaltados() {
-
-        if (puntoSeleccionado == null) {
-            return Collections.emptyList();
-        }
-
-        return consultaModeloGeneral.getPuntosConectables(puntoSeleccionado);
+        return hoverPintado != null;
     }
 
     public Color getColor(Jugador jugador) {
@@ -192,25 +269,25 @@ public class ControlModeloVisual {
     public Punto getPuntoEnCoordenadas(int x, int y, int anchoPanel, int altoPanel) {
 
         int tamano = consultaModeloGeneral.getTamano();
-        double tolerancia = Math.min(getTamanoCelda(anchoPanel, altoPanel) / 2, 22);
-        double mejorDistancia = tolerancia;
-        Punto mejor = null;
+        double celda = getTamanoCelda(anchoPanel, altoPanel);
+        double tolerancia = Math.min(celda / 2, 22);
 
-        for (int fila = 0; fila < tamano; fila++) {
-            for (int columna = 0; columna < tamano; columna++) {
+        int columna = (int) Math.round((x - origenX(anchoPanel, altoPanel)) / celda);
+        int fila = (int) Math.round((y - origenY(anchoPanel, altoPanel)) / celda);
 
-                double distancia = Math.hypot(
-                        x - getCoordenadaX(columna, anchoPanel, altoPanel),
-                        y - getCoordenadaY(fila, anchoPanel, altoPanel));
-
-                if (distancia < mejorDistancia) {
-                    mejorDistancia = distancia;
-                    mejor = new Punto(fila, columna);
-                }
-            }
+        if (columna < 0 || columna >= tamano || fila < 0 || fila >= tamano) {
+            return null;
         }
 
-        return mejor;
+        double distancia = Math.hypot(
+                x - getCoordenadaX(columna, anchoPanel, altoPanel),
+                y - getCoordenadaY(fila, anchoPanel, altoPanel));
+
+        return distancia < tolerancia ? new Punto(fila, columna) : null;
+    }
+
+    public int getTamanoTablero() {
+        return consultaModeloGeneral.getTamano();
     }
 
     public double getCoordenadaX(int columna, int anchoPanel, int altoPanel) {
@@ -236,79 +313,6 @@ public class ControlModeloVisual {
 
     private double origenY(int anchoPanel, int altoPanel) {
         return (altoPanel - lado(anchoPanel, altoPanel)) / 2;
-    }
-
-    public List<CuadroVisual> getCuadros(int anchoPanel, int altoPanel) {
-
-        double lado = getTamanoCelda(anchoPanel, altoPanel);
-        List<CuadroVisual> cuadros = new ArrayList<>();
-
-        for (Cuadrado cuadrado : consultaModeloGeneral.getCuadros()) {
-
-            Punto esquina = cuadrado.getEsquinaSupIzq();
-            cuadros.add(new CuadroVisual(
-                    getCoordenadaX(esquina.getColumna(), anchoPanel, altoPanel),
-                    getCoordenadaY(esquina.getFila(), anchoPanel, altoPanel),
-                    lado,
-                    getColor(cuadrado.getJugador())));
-        }
-
-        return cuadros;
-    }
-
-    public List<LineaVisual> getLineas(int anchoPanel, int altoPanel) {
-
-        List<LineaVisual> lineas = new ArrayList<>();
-
-        for (Linea linea : consultaModeloGeneral.getLineas()) {
-
-            lineas.add(new LineaVisual(
-                    getCoordenadaX(linea.getPuntoA().getColumna(), anchoPanel, altoPanel),
-                    getCoordenadaY(linea.getPuntoA().getFila(), anchoPanel, altoPanel),
-                    getCoordenadaX(linea.getPuntoB().getColumna(), anchoPanel, altoPanel),
-                    getCoordenadaY(linea.getPuntoB().getFila(), anchoPanel, altoPanel),
-                    getColor(linea.getJugador())));
-        }
-
-        return lineas;
-    }
-
-    public List<PuntoVisual> getPuntos(int anchoPanel, int altoPanel) {
-
-        int tamano = consultaModeloGeneral.getTamano();
-        List<Punto> resaltados = getPuntosResaltados();
-        Punto bajoMouse = hayPuntoBajoMouse() ? puntoBajoMouse : null;
-        List<PuntoVisual> puntos = new ArrayList<>();
-
-        for (int fila = 0; fila < tamano; fila++) {
-            for (int columna = 0; columna < tamano; columna++) {
-
-                Punto actual = new Punto(fila, columna);
-                puntos.add(new PuntoVisual(
-                        getCoordenadaX(columna, anchoPanel, altoPanel),
-                        getCoordenadaY(fila, anchoPanel, altoPanel),
-                        estadoDe(actual, resaltados, bajoMouse)));
-            }
-        }
-
-        return puntos;
-    }
-
-    private EstadoPunto estadoDe(Punto punto, List<Punto> resaltados, Punto bajoMouse) {
-
-        if (punto.equals(puntoSeleccionado)) {
-            return EstadoPunto.SELECCIONADO;
-        }
-
-        if (resaltados.contains(punto)) {
-            return EstadoPunto.RESALTADO;
-        }
-
-        if (punto.equals(bajoMouse)) {
-            return EstadoPunto.HOVER;
-        }
-
-        return EstadoPunto.NORMAL;
     }
 
     public ResultadoPartida getResultado() {

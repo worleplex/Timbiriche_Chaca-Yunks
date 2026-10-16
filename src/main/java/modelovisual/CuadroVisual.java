@@ -4,28 +4,22 @@ import java.awt.Color;
 
 public class CuadroVisual {
 
-    private final double x;
-    private final double y;
-    private final double lado;
+    private final int fila;
+    private final int columna;
     private final Color color;
 
-    public CuadroVisual(double x, double y, double lado, Color color) {
-        this.x = x;
-        this.y = y;
-        this.lado = lado;
+    public CuadroVisual(int fila, int columna, Color color) {
+        this.fila = fila;
+        this.columna = columna;
         this.color = color;
     }
 
-    public double getX() {
-        return x;
+    public int getFila() {
+        return fila;
     }
 
-    public double getY() {
-        return y;
-    }
-
-    public double getLado() {
-        return lado;
+    public int getColumna() {
+        return columna;
     }
 
     public Color getColor() {

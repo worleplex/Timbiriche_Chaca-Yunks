@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class Tablero {
@@ -17,12 +18,14 @@ public class Tablero {
     private final List<Cuadrado> cuadros;
     private final List<Jugador> jugadores;
     private int turnoActual;
+    private Punto puntoSeleccionado;
+    private final GestorAlmacenamientoJuego gestor;
 
-    public Tablero(List<Jugador> jugadores) {
-        this(tamanoParaJugadores(jugadores), jugadores);
+    public Tablero(List<Jugador> jugadores, GestorAlmacenamientoJuego gestor) {
+        this(tamanoParaJugadores(jugadores), jugadores, gestor);
     }
 
-    Tablero(int tamano, List<Jugador> jugadores) {
+    Tablero(int tamano, List<Jugador> jugadores, GestorAlmacenamientoJuego gestor) {
 
         if (tamano < 2) {
             throw new IllegalArgumentException("El tablero necesita al menos 2 puntos por lado");
@@ -31,6 +34,7 @@ public class Tablero {
             throw new IllegalArgumentException("Se necesita al menos un jugador");
         }
 
+        this.gestor = Objects.requireNonNull(gestor, "El gestor de almacenamiento es obligatorio");
         this.tamano = tamano;
         this.jugadores = new ArrayList<>(jugadores);
         this.lineas = new LinkedHashSet<>();
@@ -63,7 +67,11 @@ public class Tablero {
 
         Jugador jugadorActual = getJugadorActual();
 
-        lineas.add(new Linea(puntoA, puntoB, jugadorActual));
+        gestor.iniciarAccion();
+
+        Linea nueva = new Linea(puntoA, puntoB, jugadorActual);
+        lineas.add(nueva);
+        gestor.guardarLinea(nueva);
 
         int cuadrosCompletados = completarCuadros(puntoA, puntoB, jugadorActual);
 
@@ -71,7 +79,50 @@ public class Tablero {
             turnoActual = (turnoActual + 1) % jugadores.size();
         }
 
+        if (puntoSeleccionado != null) {
+            puntoSeleccionado = null;
+            gestor.guardarSeleccion(null, Collections.<Punto>emptyList());
+        }
+
+        gestor.publicarCambios();
+
         return true;
+    }
+
+    public boolean seleccionarPunto(int fila, int columna) {
+
+        Punto punto = new Punto(fila, columna);
+
+        if (isJuegoTerminado() || !estaDentroDelTablero(punto) || punto.equals(puntoSeleccionado)) {
+            return false;
+        }
+
+        puntoSeleccionado = punto;
+
+        gestor.iniciarAccion();
+        gestor.guardarSeleccion(punto, getPuntosConectables(punto));
+        gestor.publicarCambios();
+
+        return true;
+    }
+
+    public boolean deseleccionarPunto() {
+
+        if (puntoSeleccionado == null) {
+            return false;
+        }
+
+        puntoSeleccionado = null;
+
+        gestor.iniciarAccion();
+        gestor.guardarSeleccion(null, Collections.<Punto>emptyList());
+        gestor.publicarCambios();
+
+        return true;
+    }
+
+    public Punto getPuntoSeleccionado() {
+        return puntoSeleccionado;
     }
 
     private boolean sePuedeTrazar(Punto puntoA, Punto puntoB) {
@@ -108,8 +159,10 @@ public class Tablero {
             }
 
             if (cuadradoCompleto(esquina)) {
-                cuadros.add(construirCuadrado(esquina, jugador));
+                Cuadrado cuadrado = construirCuadrado(esquina, jugador);
+                cuadros.add(cuadrado);
                 jugador.sumarPunto();
+                gestor.guardarCuadro(cuadrado);
                 completados++;
             }
         }

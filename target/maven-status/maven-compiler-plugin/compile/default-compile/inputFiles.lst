@@ -1,29 +1,36 @@
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\com\mycompany\timbiriche\Timbiriche.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\controlador\Controlador.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\ensamblador\Ensamblador.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelo\Cuadrado.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelo\FachadaModelo.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelo\IConsultaModelo.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelo\IOperacionesModelo.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelo\Jugador.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelo\Linea.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelo\Punto.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelo\Tablero.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelovisual\ControlModeloVisual.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelovisual\CuadroVisual.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelovisual\EstadoPunto.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelovisual\FachadaModeloVisual.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelovisual\FilaResultado.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelovisual\IConsultaModeloVisual.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelovisual\IOperacionesModeloVisual.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelovisual\LineaVisual.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelovisual\PuntoVisual.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelovisual\ResultadoPartida.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\modelovisual\TarjetaJugador.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\utilerias\Observador.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\utilerias\SujetoObservado.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\vista\DialogoNumeroJugadores.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\vista\PanelLateral.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\vista\PanelTablero.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\vista\Tema.java
-C:\Users\ERICK\Documents\Timbiriche_Chaca-Yunks\src\main\java\vista\VistaTablero.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\com\mycompany\timbiriche\Timbiriche.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\controlador\Controlador.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\ensamblador\Ensamblador.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelo\ContenedorJuego.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelo\Cuadrado.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelo\FachadaModelo.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelo\GestorAlmacenamientoJuego.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelo\IConsultaContenedorJuego.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelo\IConsultaModelo.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelo\IOperacionesModelo.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelo\Jugador.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelo\Linea.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelo\Punto.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelo\Tablero.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\ContenedorVisual.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\ControlModeloVisual.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\CuadroVisual.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\EstadoPunto.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\FachadaModeloVisual.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\FilaResultado.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\GestorAlmacenamientoVisual.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\IConsultaContenedor.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\IConsultaModeloVisual.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\IOperacionesModeloVisual.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\LineaVisual.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\PuntoVisual.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\ResultadoPartida.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\modelovisual\TarjetaJugador.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\utilerias\Observador.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\utilerias\SujetoObservado.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\vista\DialogoNumeroJugadores.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\vista\LienzoTablero.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\vista\PanelLateral.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\vista\PanelTablero.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\vista\Tema.java
+C:\Users\julia\Downloads\timbiricheSimpleMVC_v4 (1)\timbiricheSimpleMVC2\src\main\java\vista\VistaTablero.java

@@ -13,13 +13,13 @@ public interface IConsultaModeloVisual {
 
     boolean hayPuntoBajoMouse();
 
+    int getTamanoTablero();
+
     double getTamanoCelda(int anchoPanel, int altoPanel);
 
-    List<CuadroVisual> getCuadros(int anchoPanel, int altoPanel);
+    double getCoordenadaX(int columna, int anchoPanel, int altoPanel);
 
-    List<LineaVisual> getLineas(int anchoPanel, int altoPanel);
-
-    List<PuntoVisual> getPuntos(int anchoPanel, int altoPanel);
+    double getCoordenadaY(int fila, int anchoPanel, int altoPanel);
 
     ResultadoPartida getResultado();
 

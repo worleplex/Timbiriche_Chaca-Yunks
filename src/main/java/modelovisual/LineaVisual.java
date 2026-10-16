@@ -4,34 +4,34 @@ import java.awt.Color;
 
 public class LineaVisual {
 
-    private final double x1;
-    private final double y1;
-    private final double x2;
-    private final double y2;
+    private final int fila1;
+    private final int columna1;
+    private final int fila2;
+    private final int columna2;
     private final Color color;
 
-    public LineaVisual(double x1, double y1, double x2, double y2, Color color) {
-        this.x1 = x1;
-        this.y1 = y1;
-        this.x2 = x2;
-        this.y2 = y2;
+    public LineaVisual(int fila1, int columna1, int fila2, int columna2, Color color) {
+        this.fila1 = fila1;
+        this.columna1 = columna1;
+        this.fila2 = fila2;
+        this.columna2 = columna2;
         this.color = color;
     }
 
-    public double getX1() {
-        return x1;
+    public int getFila1() {
+        return fila1;
     }
 
-    public double getY1() {
-        return y1;
+    public int getColumna1() {
+        return columna1;
     }
 
-    public double getX2() {
-        return x2;
+    public int getFila2() {
+        return fila2;
     }
 
-    public double getY2() {
-        return y2;
+    public int getColumna2() {
+        return columna2;
     }
 
     public Color getColor() {

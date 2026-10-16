@@ -1,59 +1,46 @@
 package modelovisual;
 
+import modelo.IConsultaContenedorJuego;
 import modelo.IConsultaModelo;
 import modelo.IOperacionesModelo;
 import modelo.Jugador;
 import utilerias.Observador;
-import utilerias.SujetoObservado;
 
 import java.awt.Color;
 import java.util.List;
 
-public class FachadaModeloVisual extends SujetoObservado
+public class FachadaModeloVisual
         implements IOperacionesModeloVisual, IConsultaModeloVisual, Observador {
 
     private final ControlModeloVisual control;
 
     public FachadaModeloVisual(IConsultaModelo consultaModeloGeneral,
-                        IOperacionesModelo operacionesModeloGeneral,
-                        Jugador jugadorLocal) {
-        this.control = new ControlModeloVisual(consultaModeloGeneral, operacionesModeloGeneral, jugadorLocal);
+                               IOperacionesModelo operacionesModeloGeneral,
+                               IConsultaContenedorJuego contenedorJuego,
+                               GestorAlmacenamientoVisual gestorVisual,
+                               Jugador jugadorLocal) {
+        this.control = new ControlModeloVisual(consultaModeloGeneral, operacionesModeloGeneral,
+                contenedorJuego, gestorVisual, jugadorLocal);
     }
 
     @Override
     public void clic(int x, int y, int anchoPanel, int altoPanel) {
-
-        boolean cambioVisual = control.clic(x, y, anchoPanel, altoPanel);
-
-        if (cambioVisual) {
-            notificarObservadores();
-        }
+        control.clic(x, y, anchoPanel, altoPanel);
     }
 
     @Override
     public void mover(int x, int y, int anchoPanel, int altoPanel) {
-
-        boolean cambioVisual = control.mover(x, y, anchoPanel, altoPanel);
-
-        if (cambioVisual) {
-            notificarObservadores();
-        }
+        control.mover(x, y, anchoPanel, altoPanel);
     }
 
     @Override
     public void salirDelTablero() {
-
-        boolean cambioVisual = control.salirDelTablero();
-
-        if (cambioVisual) {
-            notificarObservadores();
-        }
+        control.salirDelTablero();
     }
 
     @Override
     public void actualizar() {
-        control.limpiarSeleccion();
-        notificarObservadores();
+        control.procesarCambiosDelJuego();
     }
 
     @Override
@@ -77,23 +64,23 @@ public class FachadaModeloVisual extends SujetoObservado
     }
 
     @Override
+    public int getTamanoTablero() {
+        return control.getTamanoTablero();
+    }
+
+    @Override
     public double getTamanoCelda(int anchoPanel, int altoPanel) {
         return control.getTamanoCelda(anchoPanel, altoPanel);
     }
 
     @Override
-    public List<CuadroVisual> getCuadros(int anchoPanel, int altoPanel) {
-        return control.getCuadros(anchoPanel, altoPanel);
+    public double getCoordenadaX(int columna, int anchoPanel, int altoPanel) {
+        return control.getCoordenadaX(columna, anchoPanel, altoPanel);
     }
 
     @Override
-    public List<LineaVisual> getLineas(int anchoPanel, int altoPanel) {
-        return control.getLineas(anchoPanel, altoPanel);
-    }
-
-    @Override
-    public List<PuntoVisual> getPuntos(int anchoPanel, int altoPanel) {
-        return control.getPuntos(anchoPanel, altoPanel);
+    public double getCoordenadaY(int fila, int anchoPanel, int altoPanel) {
+        return control.getCoordenadaY(fila, anchoPanel, altoPanel);
     }
 
     @Override

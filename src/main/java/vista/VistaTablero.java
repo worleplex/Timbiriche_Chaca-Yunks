@@ -1,7 +1,11 @@
 package vista;
 
 import controlador.Controlador;
+import modelovisual.CuadroVisual;
+import modelovisual.IConsultaContenedor;
 import modelovisual.IConsultaModeloVisual;
+import modelovisual.LineaVisual;
+import modelovisual.PuntoVisual;
 import utilerias.Observador;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -20,11 +24,13 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
+import java.util.List;
 
 public class VistaTablero extends JFrame implements Observador {
 
     private Controlador controlador;
     private IConsultaModeloVisual modeloVisual;
+    private IConsultaContenedor consultaContenedor;
 
     private final PanelTablero panelTablero = new PanelTablero();
     private final PanelLateral panelLateral = new PanelLateral();
@@ -84,17 +90,34 @@ public class VistaTablero extends JFrame implements Observador {
         cartelTurno.setModeloVisual(modeloVisual);
     }
 
+    public void setConsultaContenedor(IConsultaContenedor consultaContenedor) {
+        this.consultaContenedor = consultaContenedor;
+    }
+
     @Override
     public void actualizar() {
-
-        if (!SwingUtilities.isEventDispatchThread()) {
-            SwingUtilities.invokeLater(this::actualizar);
-            return;
-        }
 
         if (modeloVisual == null) {
             return;
         }
+
+        List<PuntoVisual> puntos = consultaContenedor.getPuntosCambiados();
+        List<LineaVisual> lineas = consultaContenedor.getLineasNuevas();
+        List<CuadroVisual> cuadros = consultaContenedor.getCuadrosNuevos();
+
+        if (!SwingUtilities.isEventDispatchThread()) {
+            SwingUtilities.invokeLater(() -> aplicarCambios(puntos, lineas, cuadros));
+            return;
+        }
+
+        aplicarCambios(puntos, lineas, cuadros);
+    }
+
+    private void aplicarCambios(List<PuntoVisual> puntos, List<LineaVisual> lineas,
+                                List<CuadroVisual> cuadros) {
+
+        panelTablero.aplicarCambios(puntos, lineas, cuadros);
+        panelTablero.setResultado(modeloVisual.getResultado());
 
         String anuncio = modeloVisual.tomarAnuncioTurno();
         if (anuncio != null) {
@@ -102,7 +125,6 @@ public class VistaTablero extends JFrame implements Observador {
         }
 
         panelTablero.actualizarCursor();
-        panelTablero.repaint();
         panelLateral.repaint();
     }
 

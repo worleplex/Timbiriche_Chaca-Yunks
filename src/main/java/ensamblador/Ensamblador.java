@@ -2,9 +2,11 @@ package ensamblador;
 
 import controlador.Controlador;
 import modelo.FachadaModelo;
+import modelo.GestorAlmacenamientoJuego;
 import modelo.Jugador;
 import modelo.Tablero;
 import modelovisual.FachadaModeloVisual;
+import modelovisual.GestorAlmacenamientoVisual;
 import vista.DialogoNumeroJugadores;
 import vista.VistaTablero;
 
@@ -28,7 +30,8 @@ public class Ensamblador {
             jugadores.add(new Jugador("Jugador " + (i + 1)));
         }
 
-        FachadaModelo modeloGeneral = new FachadaModelo(jugadores);
+        GestorAlmacenamientoJuego gestorJuego = new GestorAlmacenamientoJuego();
+        FachadaModelo modeloGeneral = new FachadaModelo(jugadores, gestorJuego);
 
         List<VistaTablero> vistas = new ArrayList<>();
 
@@ -36,16 +39,19 @@ public class Ensamblador {
 
             Jugador jugador = jugadores.get(i);
 
-            FachadaModeloVisual modeloVisual = new FachadaModeloVisual(modeloGeneral, modeloGeneral, jugador);
+            GestorAlmacenamientoVisual gestorVisual = new GestorAlmacenamientoVisual();
+            FachadaModeloVisual modeloVisual = new FachadaModeloVisual(modeloGeneral, modeloGeneral,
+                    gestorJuego.getConsultaContenedor(), gestorVisual, jugador);
             Controlador controlador = new Controlador();
             VistaTablero vista = new VistaTablero(i + 1);
 
             controlador.setModeloVisual(modeloVisual);
             vista.setControlador(controlador);
             vista.setModeloVisual(modeloVisual);
+            vista.setConsultaContenedor(gestorVisual.getConsultaContenedor());
 
-            modeloGeneral.agregarObservador(modeloVisual);
-            modeloVisual.agregarObservador(vista);
+            gestorJuego.agregarObservador(modeloVisual);
+            gestorVisual.agregarObservador(vista);
 
             vistas.add(vista);
         }

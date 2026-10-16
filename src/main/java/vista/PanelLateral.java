@@ -260,4 +260,4 @@ public class PanelLateral extends JPanel {
             return new java.awt.Insets(margenY, margenX, margenY, margenX);
         }
     }
-}
+}

@@ -21,4 +21,4 @@ public class Jugador {
     void sumarPunto() {
         puntaje++;
     }
-}
+}

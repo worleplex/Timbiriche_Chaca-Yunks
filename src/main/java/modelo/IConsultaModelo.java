@@ -18,6 +18,8 @@ public interface IConsultaModelo {
 
     List<Punto> getPuntosConectables(Punto desde);
 
+    Punto getPuntoSeleccionado();
+
     List<Jugador> getGanadores();
 
-}
+}
