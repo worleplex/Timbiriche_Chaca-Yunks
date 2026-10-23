@@ -11,21 +11,6 @@ public class FachadaModelo implements IOperacionesModelo, IConsultaModelo {
     }
 
     @Override
-    public boolean trazarLinea(int fila1, int columna1, int fila2, int columna2) {
-        return control.trazarLinea(fila1, columna1, fila2, columna2);
-    }
-
-    @Override
-    public boolean seleccionarPunto(int fila, int columna) {
-        return control.seleccionarPunto(fila, columna);
-    }
-
-    @Override
-    public boolean deseleccionarPunto() {
-        return control.deseleccionarPunto();
-    }
-
-    @Override
     public boolean clicPunto(Jugador jugador, int fila, int columna) {
         return control.clicPunto(jugador, fila, columna);
     }

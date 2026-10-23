@@ -1,26 +1,14 @@
 package modelovisual;
 
-import modelo.IConsultaContenedorJuego;
-import modelo.IConsultaModelo;
-import modelo.IOperacionesModelo;
-import modelo.Jugador;
-import utilerias.Observador;
-
-import java.awt.Color;
 import java.util.List;
 
 public class FachadaModeloVisual
-        implements IOperacionesModeloVisual, IConsultaModeloVisual, Observador {
+        implements IOperacionesModeloVisual, IConsultaModeloVisual {
 
     private final ControlModeloVisual control;
 
-    public FachadaModeloVisual(IConsultaModelo consultaModeloGeneral,
-                               IOperacionesModelo operacionesModeloGeneral,
-                               IConsultaContenedorJuego contenedorJuego,
-                               GestorAlmacenamientoVisual gestorVisual,
-                               Jugador jugadorLocal) {
-        this.control = new ControlModeloVisual(consultaModeloGeneral, operacionesModeloGeneral,
-                contenedorJuego, gestorVisual, jugadorLocal);
+    public FachadaModeloVisual(ControlModeloVisual control) {
+        this.control = control;
     }
 
     @Override
@@ -39,23 +27,8 @@ public class FachadaModeloVisual
     }
 
     @Override
-    public void actualizar() {
-        control.procesarCambiosDelJuego();
-    }
-
-    @Override
     public String getTituloVentana() {
         return control.getTituloVentana();
-    }
-
-    @Override
-    public String tomarAnuncioTurno() {
-        return control.tomarAnuncioTurno();
-    }
-
-    @Override
-    public Color getColorTurno() {
-        return control.getColorTurno();
     }
 
     @Override
@@ -91,20 +64,5 @@ public class FachadaModeloVisual
     @Override
     public double getDesplazamientoY(int anchoPanel, int altoPanel) {
         return control.getDesplazamientoY(anchoPanel, altoPanel);
-    }
-
-    @Override
-    public ResultadoPartida getResultado() {
-        return control.getResultado();
-    }
-
-    @Override
-    public TarjetaJugador getTarjetaPrincipal() {
-        return control.getTarjetaPrincipal();
-    }
-
-    @Override
-    public List<TarjetaJugador> getTarjetasRivales() {
-        return control.getTarjetasRivales();
     }
 }

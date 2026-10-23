@@ -3,6 +3,7 @@ package modelo;
 import utilerias.SujetoObservado;
 
 import java.util.List;
+import java.util.Map;
 
 public class GestorAlmacenamientoJuego extends SujetoObservado {
 
@@ -26,6 +27,11 @@ public class GestorAlmacenamientoJuego extends SujetoObservado {
 
     void guardarCuadro(Cuadrado cuadro) {
         contenedor.registrarCuadro(cuadro);
+    }
+
+    void guardarEstadoJugadores(Jugador actual, Map<Jugador, Integer> puntajes,
+                                boolean terminado, List<Jugador> ganadores) {
+        contenedor.registrarEstadoJugadores(actual, puntajes, terminado, ganadores);
     }
 
     void publicarCambios() {

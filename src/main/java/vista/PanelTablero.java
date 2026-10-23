@@ -3,6 +3,7 @@ package vista;
 import controlador.Controlador;
 import modelovisual.CuadroVisual;
 import modelovisual.FilaResultado;
+import modelovisual.IConsultaContenedor;
 import modelovisual.IConsultaModeloVisual;
 import modelovisual.LineaVisual;
 import modelovisual.PuntoVisual;
@@ -23,6 +24,7 @@ import java.util.List;
 class PanelTablero extends JPanel {
 
     private IConsultaModeloVisual modeloVisual;
+    private IConsultaContenedor consultaContenedor;
     private Controlador controlador;
     private LienzoTablero lienzo;
     private ResultadoPartida resultado;
@@ -62,7 +64,18 @@ class PanelTablero extends JPanel {
 
     void setModeloVisual(IConsultaModeloVisual modeloVisual) {
         this.modeloVisual = modeloVisual;
-        this.lienzo = new LienzoTablero(modeloVisual);
+        crearLienzo();
+    }
+
+    void setConsultaContenedor(IConsultaContenedor consultaContenedor) {
+        this.consultaContenedor = consultaContenedor;
+        crearLienzo();
+    }
+
+    private void crearLienzo() {
+        if (modeloVisual != null && consultaContenedor != null) {
+            lienzo = new LienzoTablero(modeloVisual, consultaContenedor);
+        }
     }
 
     void aplicarCambios(List<PuntoVisual> puntos, List<LineaVisual> lineas, List<CuadroVisual> cuadros) {

@@ -7,6 +7,7 @@ import modelo.IOperacionesModelo;
 import modelo.Jugador;
 import modelo.Linea;
 import modelo.Punto;
+import utilerias.Observador;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -20,7 +21,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class ControlModeloVisual {
+public class ControlModeloVisual implements Observador {
 
     private static final Color[] PALETA = {
             Color.BLUE, Color.RED, new Color(0, 150, 0), new Color(220, 140, 0)
@@ -30,12 +31,11 @@ public class ControlModeloVisual {
 
     private static final String NOMBRE_COLOR_PERSONALIZADO = "Personalizado";
 
-    private final IConsultaModelo consultaModeloGeneral;
     private final IOperacionesModelo operacionesModeloGeneral;
     private final IConsultaContenedorJuego contenedorJuego;
     private final GestorAlmacenamientoVisual gestorVisual;
     private final Jugador jugadorLocal;
-    private Jugador ultimoAnunciado;
+    private final List<Jugador> jugadores;
     private final Map<Jugador, Color> colores;
     private final Map<Jugador, String> nombresColor;
 
@@ -51,13 +51,15 @@ public class ControlModeloVisual {
 
     private CoordenadaTablero puntoBajoMouse;
 
+    private Jugador jugadorActual;
+    private boolean juegoTerminado;
+
     public ControlModeloVisual(IConsultaModelo consultaModeloGeneral,
                                IOperacionesModelo operacionesModeloGeneral,
                                IConsultaContenedorJuego contenedorJuego,
                                GestorAlmacenamientoVisual gestorVisual,
                                Jugador jugadorLocal) {
         this.jugadorLocal = jugadorLocal;
-        this.consultaModeloGeneral = consultaModeloGeneral;
         this.operacionesModeloGeneral = operacionesModeloGeneral;
         this.contenedorJuego = contenedorJuego;
         this.gestorVisual = gestorVisual;
@@ -66,11 +68,20 @@ public class ControlModeloVisual {
 
         this.colores = new HashMap<>();
         this.nombresColor = new HashMap<>();
-        List<Jugador> jugadores = consultaModeloGeneral.getJugadores();
+        this.jugadores = new ArrayList<>(consultaModeloGeneral.getJugadores());
         for (int i = 0; i < jugadores.size(); i++) {
             colores.put(jugadores.get(i), PALETA[i % PALETA.length]);
             nombresColor.put(jugadores.get(i), NOMBRES_COLOR[i % NOMBRES_COLOR.length]);
         }
+
+        this.jugadorActual = consultaModeloGeneral.getJugadorActual();
+        this.juegoTerminado = consultaModeloGeneral.isJuegoTerminado();
+
+        Map<Jugador, Integer> puntajes = new LinkedHashMap<>();
+        for (Jugador jugador : jugadores) {
+            puntajes.put(jugador, jugador.getPuntaje());
+        }
+        guardarEstadoJugadores(puntajes, Collections.<Jugador>emptyList());
     }
 
     public void clic(int x, int y, int anchoPanel, int altoPanel) {
@@ -81,7 +92,6 @@ public class ControlModeloVisual {
             return;
         }
 
-        // Solo traduce y envia: el modelo del juego decide si es su turno y que hacer con el clic.
         operacionesModeloGeneral.clicPunto(jugadorLocal, traductor.aFila(punto), traductor.aColumna(punto));
     }
 
@@ -119,9 +129,20 @@ public class ControlModeloVisual {
         }
     }
 
-    public void procesarCambiosDelJuego() {
+    @Override
+    public void actualizar() {
+        procesarCambiosDelJuego();
+    }
+
+    private void procesarCambiosDelJuego() {
 
         gestorVisual.iniciarCambios();
+
+        if (contenedorJuego.hayCambioEstadoJugadores()) {
+            jugadorActual = contenedorJuego.getJugadorActual();
+            juegoTerminado = contenedorJuego.isJuegoTerminado();
+            guardarEstadoJugadores(contenedorJuego.getPuntajes(), contenedorJuego.getGanadores());
+        }
 
         for (Linea linea : contenedorJuego.getLineasNuevas()) {
             CoordenadaTablero a = traducir(linea.getPuntoA());
@@ -222,8 +243,7 @@ public class ControlModeloVisual {
     }
 
     public boolean esMiTurno() {
-        return !consultaModeloGeneral.isJuegoTerminado()
-                && jugadorLocal.equals(consultaModeloGeneral.getJugadorActual());
+        return !juegoTerminado && jugadorLocal.equals(jugadorActual);
     }
 
     public boolean hayPuntoBajoMouse() {
@@ -234,34 +254,9 @@ public class ControlModeloVisual {
         return colores.getOrDefault(jugador, Color.GRAY);
     }
 
-    public Color getColorTurno() {
-
-        if (consultaModeloGeneral.isJuegoTerminado()) {
-            return null;
-        }
-
-        return getColor(consultaModeloGeneral.getJugadorActual());
-    }
-
     public String getTituloVentana() {
         return "Timbiriche - " + jugadorLocal.getNombre()
                 + " (" + nombresColor.getOrDefault(jugadorLocal, NOMBRE_COLOR_PERSONALIZADO) + ")";
-    }
-
-    public String tomarAnuncioTurno() {
-
-        if (consultaModeloGeneral.isJuegoTerminado()) {
-            return null;
-        }
-
-        Jugador actual = consultaModeloGeneral.getJugadorActual();
-
-        if (actual.equals(ultimoAnunciado)) {
-            return null;
-        }
-
-        ultimoAnunciado = actual;
-        return "¡TURNO DE " + actual.getNombre().toUpperCase() + "!";
     }
 
     private CoordenadaTablero getPuntoEnCoordenadas(int x, int y, int anchoPanel, int altoPanel) {
@@ -308,15 +303,20 @@ public class ControlModeloVisual {
         return (altoPanel - TraductorCoordenadas.LADO * getEscala(anchoPanel, altoPanel)) / 2;
     }
 
-    public ResultadoPartida getResultado() {
+    private void guardarEstadoJugadores(Map<Jugador, Integer> puntajes, List<Jugador> ganadores) {
 
-        if (!consultaModeloGeneral.isJuegoTerminado()) {
-            return null;
-        }
+        TarjetaJugador principal = crearTarjetaPrincipal(puntajes, ganadores);
+        List<TarjetaJugador> rivales = crearTarjetasRivales(puntajes);
+        Color colorTurno = juegoTerminado ? null : getColor(jugadorActual);
+        ResultadoPartida resultado = juegoTerminado ? crearResultado(puntajes, ganadores) : null;
 
-        List<Jugador> ganadores = consultaModeloGeneral.getGanadores();
-        List<Jugador> posiciones = new ArrayList<>(consultaModeloGeneral.getJugadores());
-        posiciones.sort(Comparator.comparingInt(Jugador::getPuntaje).reversed());
+        gestorVisual.guardarEstadoJugadores(principal, rivales, colorTurno, resultado);
+    }
+
+    private ResultadoPartida crearResultado(Map<Jugador, Integer> puntajes, List<Jugador> ganadores) {
+
+        List<Jugador> posiciones = new ArrayList<>(jugadores);
+        posiciones.sort(Comparator.comparingInt((Jugador jugador) -> puntajes.get(jugador)).reversed());
 
         String subtitulo;
         Color colorSubtitulo;
@@ -333,12 +333,12 @@ public class ControlModeloVisual {
 
             int posicion = 1;
             for (Jugador otro : posiciones) {
-                if (otro.getPuntaje() > jugador.getPuntaje()) {
+                if (puntajes.get(otro) > puntajes.get(jugador)) {
                     posicion++;
                 }
             }
 
-            int puntaje = jugador.getPuntaje();
+            int puntaje = puntajes.get(jugador);
             filas.add(new FilaResultado(posicion, jugador.getNombre(),
                     puntaje + (puntaje == 1 ? " punto" : " puntos"), getColor(jugador)));
         }
@@ -358,39 +358,34 @@ public class ControlModeloVisual {
         return texto.toString();
     }
 
-    public TarjetaJugador getTarjetaPrincipal() {
+    private TarjetaJugador crearTarjetaPrincipal(Map<Jugador, Integer> puntajes, List<Jugador> ganadores) {
 
-        boolean terminado = consultaModeloGeneral.isJuegoTerminado();
         boolean esTurno = esMiTurno();
 
         String subtitulo;
-        if (terminado) {
-            subtitulo = consultaModeloGeneral.getGanadores().contains(jugadorLocal)
-                    ? "Ganador" : "Partida terminada";
+        if (juegoTerminado) {
+            subtitulo = ganadores.contains(jugadorLocal) ? "Ganador" : "Partida terminada";
         } else {
             subtitulo = esTurno ? "Tu turno" : "Tu jugador";
         }
 
-        return crearTarjeta(jugadorLocal, esTurno, subtitulo);
+        return crearTarjeta(jugadorLocal, puntajes.get(jugadorLocal), esTurno, subtitulo);
     }
 
-    public List<TarjetaJugador> getTarjetasRivales() {
+    private List<TarjetaJugador> crearTarjetasRivales(Map<Jugador, Integer> puntajes) {
 
-        List<Jugador> todos = consultaModeloGeneral.getJugadores();
-        int inicio = Math.max(0, todos.indexOf(jugadorLocal));
-        boolean terminado = consultaModeloGeneral.isJuegoTerminado();
-        Jugador actual = consultaModeloGeneral.getJugadorActual();
+        int inicio = Math.max(0, jugadores.indexOf(jugadorLocal));
 
         List<TarjetaJugador> tarjetas = new ArrayList<>();
-        for (int i = 1; i < todos.size(); i++) {
-            Jugador rival = todos.get((inicio + i) % todos.size());
-            tarjetas.add(crearTarjeta(rival, !terminado && rival.equals(actual), null));
+        for (int i = 1; i < jugadores.size(); i++) {
+            Jugador rival = jugadores.get((inicio + i) % jugadores.size());
+            tarjetas.add(crearTarjeta(rival, puntajes.get(rival),
+                    !juegoTerminado && rival.equals(jugadorActual), null));
         }
         return tarjetas;
     }
 
-    private TarjetaJugador crearTarjeta(Jugador jugador, boolean activa, String subtitulo) {
-        int puntos = jugador.getPuntaje();
+    private TarjetaJugador crearTarjeta(Jugador jugador, int puntos, boolean activa, String subtitulo) {
         return new TarjetaJugador(jugador.getNombre(), puntos,
                 puntos == 1 ? "punto" : "puntos",
                 getColor(jugador), activa, subtitulo);

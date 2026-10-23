@@ -2,8 +2,10 @@ package modelo;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -78,6 +80,9 @@ public class Tablero {
         if (cuadrosCompletados == 0) {
             turnoActual = (turnoActual + 1) % jugadores.size();
         }
+
+        gestor.guardarEstadoJugadores(getJugadorActual(), puntajesActuales(), isJuegoTerminado(),
+                isJuegoTerminado() ? getGanadores() : Collections.<Jugador>emptyList());
 
         if (puntoSeleccionado != null) {
             puntoSeleccionado = null;
@@ -291,6 +296,16 @@ public class Tablero {
         lados.add(new Linea(supDer, infDer, null));
 
         return lados;
+    }
+
+    private Map<Jugador, Integer> puntajesActuales() {
+
+        Map<Jugador, Integer> puntajes = new LinkedHashMap<>();
+        for (Jugador jugador : jugadores) {
+            puntajes.put(jugador, jugador.getPuntaje());
+        }
+
+        return puntajes;
     }
 
     public int getTamano() {

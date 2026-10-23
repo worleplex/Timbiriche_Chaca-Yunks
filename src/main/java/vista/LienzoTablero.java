@@ -3,6 +3,7 @@ package vista;
 import modelovisual.CoordenadaTablero;
 import modelovisual.CuadroVisual;
 import modelovisual.EstadoPunto;
+import modelovisual.IConsultaContenedor;
 import modelovisual.IConsultaModeloVisual;
 import modelovisual.LineaVisual;
 import modelovisual.PuntoVisual;
@@ -24,6 +25,7 @@ import java.util.Map;
 class LienzoTablero {
 
     private final IConsultaModeloVisual modeloVisual;
+    private final IConsultaContenedor consultaContenedor;
     private final Map<CoordenadaTablero, EstadoPunto> puntos = new LinkedHashMap<>();
     private final List<LineaVisual> lineas = new ArrayList<>();
     private final List<CuadroVisual> cuadros = new ArrayList<>();
@@ -37,8 +39,9 @@ class LienzoTablero {
     private double pxX;
     private double pxY;
 
-    LienzoTablero(IConsultaModeloVisual modeloVisual) {
+    LienzoTablero(IConsultaModeloVisual modeloVisual, IConsultaContenedor consultaContenedor) {
         this.modeloVisual = modeloVisual;
+        this.consultaContenedor = consultaContenedor;
         for (CoordenadaTablero punto : modeloVisual.getPuntosTablero()) {
             puntos.put(punto, EstadoPunto.NORMAL);
         }
@@ -197,7 +200,7 @@ class LienzoTablero {
             }
         }
 
-        Color colorTurno = modeloVisual.getColorTurno();
+        Color colorTurno = consultaContenedor.getColorTurno();
         if (colorTurno == null) {
             colorTurno = Tema.PUNTO;
         }

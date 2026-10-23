@@ -8,21 +8,13 @@ import modelovisual.LineaVisual;
 import modelovisual.PuntoVisual;
 import utilerias.Observador;
 import javax.swing.BorderFactory;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.util.List;
 
@@ -34,7 +26,6 @@ public class VistaTablero extends JFrame implements Observador {
 
     private final PanelTablero panelTablero = new PanelTablero();
     private final PanelLateral panelLateral = new PanelLateral();
-    private final CartelTurno cartelTurno = new CartelTurno();
 
     public VistaTablero() {
         this(1);
@@ -67,8 +58,6 @@ public class VistaTablero extends JFrame implements Observador {
         panelTablero.setMinimumSize(new Dimension(300, 300));
         panelLateral.setMinimumSize(new Dimension(230, 300));
 
-        setGlassPane(cartelTurno);
-
         Dimension pantalla = Toolkit.getDefaultToolkit().getScreenSize();
         int ancho = (int) Math.min(1180, pantalla.width * 0.8);
         int alto = (int) Math.min(ancho / 1.65, pantalla.height * 0.85);
@@ -85,13 +74,13 @@ public class VistaTablero extends JFrame implements Observador {
     public void setModeloVisual(IConsultaModeloVisual modeloVisual) {
         this.modeloVisual = modeloVisual;
         panelTablero.setModeloVisual(modeloVisual);
-        panelLateral.setModeloVisual(modeloVisual);
         setTitle(modeloVisual.getTituloVentana());
-        cartelTurno.setModeloVisual(modeloVisual);
     }
 
     public void setConsultaContenedor(IConsultaContenedor consultaContenedor) {
         this.consultaContenedor = consultaContenedor;
+        panelTablero.setConsultaContenedor(consultaContenedor);
+        panelLateral.setConsultaContenedor(consultaContenedor);
     }
 
     @Override
@@ -117,97 +106,9 @@ public class VistaTablero extends JFrame implements Observador {
                                 List<CuadroVisual> cuadros) {
 
         panelTablero.aplicarCambios(puntos, lineas, cuadros);
-        panelTablero.setResultado(modeloVisual.getResultado());
-
-        String anuncio = modeloVisual.tomarAnuncioTurno();
-        if (anuncio != null) {
-            cartelTurno.anunciar(anuncio, panelTablero);
-        }
+        panelTablero.setResultado(consultaContenedor.getResultado());
 
         panelTablero.actualizarCursor();
         panelLateral.repaint();
-    }
-
-    private static class CartelTurno extends JComponent {
-
-        private static final long DURACION_MS = 1300;
-
-        private IConsultaModeloVisual modeloVisual;
-        private String texto = "";
-        private JComponent referencia;
-        private long inicio;
-        private final Timer reloj = new Timer(25, e -> avanzar());
-
-        CartelTurno() {
-            setOpaque(false);
-            setVisible(false);
-        }
-
-        void setModeloVisual(IConsultaModeloVisual modeloVisual) {
-            this.modeloVisual = modeloVisual;
-        }
-
-        void anunciar(String texto, JComponent referencia) {
-            this.texto = texto;
-            this.referencia = referencia;
-            this.inicio = System.nanoTime();
-            setVisible(true);
-            reloj.restart();
-        }
-
-        private double progreso() {
-            return Math.min(1.0, (System.nanoTime() - inicio) / 1_000_000.0 / DURACION_MS);
-        }
-
-        private void avanzar() {
-            if (progreso() >= 1.0) {
-                reloj.stop();
-                setVisible(false);
-            } else {
-                repaint();
-            }
-        }
-
-        @Override
-        protected void paintComponent(Graphics g) {
-
-            double t = progreso();
-            double opacidad = t < 0.1 ? t / 0.1 : (t > 0.7 ? Math.max(0, (1 - t) / 0.3) : 1);
-            double entrada = 1 - Math.pow(1 - Math.min(1, t / 0.2), 3);
-
-            Graphics2D g2 = (Graphics2D) g.create();
-            Tema.suavizar(g2);
-
-            g2.setColor(new Color(0, 0, 0, (int) (165 * opacidad)));
-            g2.fillRect(0, 0, getWidth(), getHeight());
-
-            Rectangle zona = referencia == null
-                    ? new Rectangle(0, 0, getWidth(), getHeight())
-                    : SwingUtilities.convertRectangle(referencia.getParent(), referencia.getBounds(), this);
-
-            double tamano = zona.height * 0.12;
-            g2.setFont(Tema.fuente(Font.BOLD, tamano));
-            double ancho = g2.getFontMetrics().stringWidth(texto);
-            if (ancho > zona.width * 0.9) {
-                tamano *= zona.width * 0.9 / ancho;
-            }
-            tamano *= 0.88 + 0.12 * entrada;
-            g2.setFont(Tema.fuente(Font.BOLD, tamano));
-            FontMetrics fm = g2.getFontMetrics();
-
-            Color color = Tema.TEXTO;
-            if (modeloVisual != null) {
-                Color colorTurno = modeloVisual.getColorTurno();
-                if (colorTurno != null) {
-                    color = Tema.mezclar(colorTurno, Color.WHITE, 0.55);
-                }
-            }
-            g2.setColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) (255 * opacidad)));
-            g2.drawString(texto,
-                    (float) (zona.getCenterX() - fm.stringWidth(texto) / 2.0),
-                    (float) (zona.getCenterY() + (fm.getAscent() - fm.getDescent()) / 2.0));
-
-            g2.dispose();
-        }
     }
 }

@@ -14,11 +14,11 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
-import modelovisual.IConsultaModeloVisual;
+import modelovisual.IConsultaContenedor;
 import modelovisual.TarjetaJugador;
 
 public class PanelLateral extends JPanel {
-    private IConsultaModeloVisual modeloVisual;
+    private IConsultaContenedor consultaContenedor;
     
     PanelLateral() {
         setOpaque(false);
@@ -38,8 +38,8 @@ public class PanelLateral extends JPanel {
         restriccion.insets = new java.awt.Insets(0, 0, separacion, 0);
         add(componente, restriccion);
     }
-    void setModeloVisual(IConsultaModeloVisual modeloVisual) {
-        this.modeloVisual = modeloVisual;
+    void setConsultaContenedor(IConsultaContenedor consultaContenedor) {
+        this.consultaContenedor = consultaContenedor;
     }
 
     private void dibujarTarjeta(Graphics2D g2, double x, double y, double ancho, double alto,
@@ -147,7 +147,7 @@ public class PanelLateral extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
 
-            if (modeloVisual == null) {
+            if (consultaContenedor == null) {
                 return;
             }
 
@@ -155,7 +155,7 @@ public class PanelLateral extends JPanel {
             Tema.suavizar(g2);
 
             dibujarTarjeta(g2, 0, 0, getWidth(), getHeight(),
-                    modeloVisual.getTarjetaPrincipal(), true);
+                    consultaContenedor.getTarjetaPrincipal(), true);
 
             g2.dispose();
         }
@@ -170,7 +170,7 @@ public class PanelLateral extends JPanel {
         @Override
         protected void paintComponent(Graphics g) {
 
-            if (modeloVisual == null) {
+            if (consultaContenedor == null) {
                 return;
             }
 
@@ -187,7 +187,7 @@ public class PanelLateral extends JPanel {
             double separacion = h * 0.02;
             double altoFila = (h - 2 * margen - 2 * separacion) / 3;
 
-            List<TarjetaJugador> rivales = modeloVisual.getTarjetasRivales();
+            List<TarjetaJugador> rivales = consultaContenedor.getTarjetasRivales();
 
             for (int i = 0; i < rivales.size(); i++) {
                 dibujarTarjeta(g2, margen, margen + i * (altoFila + separacion),

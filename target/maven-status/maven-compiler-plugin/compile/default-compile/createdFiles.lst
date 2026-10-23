@@ -4,6 +4,7 @@ modelovisual\CuadroVisual.class
 modelovisual\GestorAlmacenamientoVisual.class
 vista\PanelTablero$1.class
 modelovisual\IConsultaContenedor.class
+modelovisual\CoordenadaTablero.class
 modelovisual\FilaResultado.class
 utilerias\Observador.class
 vista\Tema.class
@@ -14,7 +15,6 @@ com\mycompany\timbiriche\Timbiriche.class
 vista\PanelLateral$ListaRivales.class
 utilerias\SujetoObservado.class
 vista\PanelTablero.class
-vista\VistaTablero$CartelTurno.class
 vista\LienzoTablero.class
 modelo\ContenedorJuego.class
 vista\LienzoTablero$1.class
@@ -39,5 +39,6 @@ modelo\IConsultaModelo.class
 modelovisual\EstadoPunto.class
 vista\PanelLateral$PanelAcciones$1.class
 modelovisual\TarjetaJugador.class
+modelovisual\TraductorCoordenadas.class
 modelovisual\ResultadoPartida.class
 vista\PanelLateral$TarjetaPrincipal.class
