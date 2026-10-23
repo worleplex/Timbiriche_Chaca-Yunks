@@ -89,6 +89,33 @@ public class Tablero {
         return true;
     }
 
+    public boolean clicPunto(Jugador jugador, int fila, int columna) {
+
+        if (isJuegoTerminado() || jugador == null || !jugador.equals(getJugadorActual())) {
+            return false;
+        }
+
+        Punto punto = new Punto(fila, columna);
+
+        if (!estaDentroDelTablero(punto)) {
+            return false;
+        }
+
+        if (puntoSeleccionado == null) {
+            return seleccionarPunto(fila, columna);
+        }
+
+        if (puntoSeleccionado.equals(punto)) {
+            return deseleccionarPunto();
+        }
+
+        if (trazarLinea(puntoSeleccionado.getFila(), puntoSeleccionado.getColumna(), fila, columna)) {
+            return true;
+        }
+
+        return seleccionarPunto(fila, columna);
+    }
+
     public boolean seleccionarPunto(int fila, int columna) {
 
         Punto punto = new Punto(fila, columna);

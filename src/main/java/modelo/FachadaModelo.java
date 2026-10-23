@@ -26,6 +26,11 @@ public class FachadaModelo implements IOperacionesModelo, IConsultaModelo {
     }
 
     @Override
+    public boolean clicPunto(Jugador jugador, int fila, int columna) {
+        return control.clicPunto(jugador, fila, columna);
+    }
+
+    @Override
     public Punto getPuntoSeleccionado() {
         return control.getPuntoSeleccionado();
     }
@@ -69,4 +74,4 @@ public class FachadaModelo implements IOperacionesModelo, IConsultaModelo {
     public List<Jugador> getGanadores() {
         return control.getGanadores();
     }
-}
+}

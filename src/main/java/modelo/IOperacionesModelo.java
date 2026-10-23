@@ -8,4 +8,6 @@ public interface IOperacionesModelo {
 
     boolean deseleccionarPunto();
 
+    boolean clicPunto(Jugador jugador, int fila, int columna);
+
 }

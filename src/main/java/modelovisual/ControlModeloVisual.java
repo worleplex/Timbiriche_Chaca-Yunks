@@ -77,30 +77,12 @@ public class ControlModeloVisual {
 
         CoordenadaTablero punto = getPuntoEnCoordenadas(x, y, anchoPanel, altoPanel);
 
-        if (punto == null || !esMiTurno()) {
+        if (punto == null) {
             return;
         }
 
-        Punto seleccionadoJuego = consultaModeloGeneral.getPuntoSeleccionado();
-        CoordenadaTablero seleccionado = seleccionadoJuego == null ? null : traducir(seleccionadoJuego);
-
-        if (seleccionado == null) {
-            operacionesModeloGeneral.seleccionarPunto(traductor.aFila(punto), traductor.aColumna(punto));
-            return;
-        }
-
-        if (seleccionado.equals(punto)) {
-            operacionesModeloGeneral.deseleccionarPunto();
-            return;
-        }
-
-        boolean jugadaValida = operacionesModeloGeneral.trazarLinea(
-                traductor.aFila(seleccionado), traductor.aColumna(seleccionado),
-                traductor.aFila(punto), traductor.aColumna(punto));
-
-        if (!jugadaValida) {
-            operacionesModeloGeneral.seleccionarPunto(traductor.aFila(punto), traductor.aColumna(punto));
-        }
+        // Solo traduce y envia: el modelo del juego decide si es su turno y que hacer con el clic.
+        operacionesModeloGeneral.clicPunto(jugadorLocal, traductor.aFila(punto), traductor.aColumna(punto));
     }
 
     private CoordenadaTablero traducir(Punto punto) {
