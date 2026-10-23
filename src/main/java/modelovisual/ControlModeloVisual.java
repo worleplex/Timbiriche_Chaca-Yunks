@@ -270,7 +270,6 @@ public class ControlModeloVisual {
         double xTablero = (x - getDesplazamientoX(anchoPanel, altoPanel)) / escala;
         double yTablero = (y - getDesplazamientoY(anchoPanel, altoPanel)) / escala;
 
-        // Misma tolerancia que antes: media celda, con tope de 22 pixeles.
         double tolerancia = Math.min(traductor.getSeparacion() / 2, 22 / escala);
 
         CoordenadaTablero cercano = null;
